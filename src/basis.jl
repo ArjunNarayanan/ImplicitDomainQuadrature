@@ -1,12 +1,3 @@
-using StaticArrays
-import DynamicPolynomials
-import StaticPolynomials
-import Base: kron
-
-# abbreviations
-DP = DynamicPolynomials
-SP = StaticPolynomials
-
 """
     AbstractBasis{N}
 abstract supertype for a function basis with `N` functions
@@ -29,9 +20,10 @@ A basis of `N` Lagrange polynomials. The polynomial order is `N + 1`.
 struct LagrangePolynomialBasis{NFuncs} <: AbstractBasis1D{NFuncs}
     funcs::SP.PolynomialSystem{NFuncs,1}
     points::SVector{NFuncs}
-    function LagrangePolynomialBasis{NFuncs}(funcs::AbstractVector{DP.Polynomial{C,T1}},
-        points::AbstractVector{T2}) where {NFuncs} where {C,T1,T2}
+    function LagrangePolynomialBasis(funcs::AbstractVector{DP.Polynomial{C,T1}},
+        points::AbstractVector{T2}) where {C,T1,T2}
 
+        NFuncs = length(funcs)
         order = NFuncs - 1
         npoints = length(points)
         if NFuncs < 2
@@ -73,3 +65,20 @@ struct LagrangePolynomialBasis{NFuncs} <: AbstractBasis1D{NFuncs}
         new{NFuncs}(polysystem,static_points)
     end
 end
+
+function LagrangePolynomialBasis(x::DP.PolyVar, order::Int;
+    start = -1.0, stop = 1.0)
+
+    NFuncs = order + 1
+    roots = range(start, stop = stop, length = NFuncs)
+    basis = lagrange_polynomials(x,roots)
+    return LagrangePolynomialBasis(basis,roots)
+end
+
+"""
+    (B::LagrangePolynomialBasis{NFuncs})(x::T) where {NFuncs,T<:Number}
+evaluate the basis `B` at the point `x`
+"""
+function (B::LagrangePolynomialBasis)(x::Number)
+    return SP.evaluate(B.funcs, @SVector [x])
+ end

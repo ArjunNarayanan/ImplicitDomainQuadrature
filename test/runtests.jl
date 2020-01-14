@@ -1,6 +1,5 @@
-using ImplicitDomainQuadrature
-using Test
+using SafeTestsets
 
-@testset "ImplicitDomainQuadrature.jl" begin
-    # Write your own tests here.
+@safetestset "Test LagrangePolynomials" begin
+    include("test_lagrange_polynomials.jl")
 end
