@@ -11,4 +11,6 @@ SP = StaticPolynomials
 include("lagrange_polynomials.jl")
 include("basis.jl")
 
+export LagrangePolynomialBasis
+
 end # module

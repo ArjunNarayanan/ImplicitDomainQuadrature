@@ -66,6 +66,11 @@ struct LagrangePolynomialBasis{NFuncs} <: AbstractBasis1D{NFuncs}
     end
 end
 
+"""
+    LagrangePolynomialBasis(x::DP.PolyVar, order::Int; start = -1.0, stop = 1.0)
+construct a polynomial basis with variable `x` of order `order` with
+equally spaced points between `start` and `stop`.
+"""
 function LagrangePolynomialBasis(x::DP.PolyVar, order::Int;
     start = -1.0, stop = 1.0)
 
@@ -76,9 +81,72 @@ function LagrangePolynomialBasis(x::DP.PolyVar, order::Int;
 end
 
 """
+    TensorProductBasis{N,NFuncs,T<:AbstractBasis1D} <: AbstractBasis{NFuncs}
+construct an `N` dimensional polynomial basis by tensor product of `T`
+with a total of `NFuncs` functions.
+Note that `NFuncs` can be inferred from `T{nfuncs}`.
+# Fields
+    - `basis::AbstractBasis1D` the underlying 1D basis
+"""
+struct TensorProductBasis{N,NFuncs,T<:AbstractBasis1D} <: AbstractBasis{NFuncs}
+    basis::AbstractBasis1D
+    function TensorProductBasis{N}(B::T) where {N,T<:AbstractBasis1D{nfuncs}} where {nfuncs}
+        if !(N > 1)
+            msg = "Tensor product construction requires dimension > 1, got $N"
+            throw(ArgumentError(msg))
+        end
+        NFuncs = nfuncs^N
+        new{N,NFuncs,T}(B)
+    end
+end
+
+"""
+    TensorProductBasis(x::DP.PolyVar, dim::Int, order::Int; start = -1.0, stop = 1.0)
+construct a `dim` dimensional polynomial basis with variable `x` using a tensor
+product of `order` order `LagrangePolynomialBasis`. The polynomials are
+equispaced from `start` to `stop`.
+"""
+function TensorProductBasis(x::DP.PolyVar, dim::Int,order::Int; start = -1.0, stop = 1.0)
+    basis_1d = LagrangePolynomialBasis(x, order, start = start, stop = stop)
+    return TensorProductBasis{dim}(basis_1d)
+end
+
+"""
     (B::LagrangePolynomialBasis{NFuncs})(x::T) where {NFuncs,T<:Number}
 evaluate the basis `B` at the point `x`
 """
 function (B::LagrangePolynomialBasis)(x::Number)
     return SP.evaluate(B.funcs, @SVector [x])
+ end
+
+ """
+     (B::TensorProductBasis{2,NFuncs,T})(x::Number,y::Number) where {T,NFuncs}
+ evaluate a 2-D tensor product basis at the point `(x,y)`
+ """
+ function (B::TensorProductBasis{2,NFuncs,T})(x::Number,y::Number) where {T,NFuncs}
+     return kron(B.basis(x), B.basis(y))
+ end
+
+ """
+     (B::TensorProductBasis{3,NFuncs,T})(x::Number,y::Number,z::Number) where {T,NFuncs}
+ evaluate a 3-D tensor product basis at the point `(x,y,z)`
+ """
+ function (B::TensorProductBasis{3,NFuncs,T})(x::Number,y::Number,z::Number) where {T,NFuncs}
+     return kron(B.basis(x), B.basis(y), B.basis(z))
+ end
+
+ """
+    (B::TensorProductBasis{N,NFuncs,T})(x::AbstractVector) where {N,NFuncs,T}
+evaluate a tensor product basis on a vector of points
+ """
+ function (B::TensorProductBasis{N,NFuncs,T})(x::AbstractVector) where {N,NFuncs,T}
+     @assert length(x) == N
+     if N == 2
+         return B(x[1],x[2])
+     elseif N == 3
+         return B(x[1],x[2],x[3])
+     else
+         msg = "Evaluation of tensor product basis currently supported for 2D and 3D points only"
+         throw(ArgumentError(msg))
+     end
  end
