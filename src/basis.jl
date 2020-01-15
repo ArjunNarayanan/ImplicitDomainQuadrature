@@ -30,11 +30,6 @@ struct LagrangePolynomialBasis{NFuncs} <: AbstractBasis1D{NFuncs}
             msg = "Number of functions must be greater than 1"
             throw(ArgumentError(msg))
         end
-        if NFuncs != length(funcs)
-            length_funcs = length(funcs)
-            msg = "Expected $NFuncs functions, got $length_funcs"
-            throw(ArgumentError(msg))
-        end
         if NFuncs != npoints
             msg = "Number of functions must be equal to number of points"
             throw(ArgumentError(msg))
@@ -67,13 +62,13 @@ struct LagrangePolynomialBasis{NFuncs} <: AbstractBasis1D{NFuncs}
 end
 
 """
-    LagrangePolynomialBasis(x::DP.PolyVar, order::Int; start = -1.0, stop = 1.0)
+    LagrangePolynomialBasis(order::Int; start = -1.0, stop = 1.0)
 construct a polynomial basis with variable `x` of order `order` with
 equally spaced points between `start` and `stop`.
 """
-function LagrangePolynomialBasis(x::DP.PolyVar, order::Int;
-    start = -1.0, stop = 1.0)
+function LagrangePolynomialBasis(order::Int; start = -1.0, stop = 1.0)
 
+    DP.@polyvar x
     NFuncs = order + 1
     roots = range(start, stop = stop, length = NFuncs)
     basis = lagrange_polynomials(x,roots)
@@ -84,15 +79,16 @@ end
     TensorProductBasis{N,NFuncs,T<:AbstractBasis1D} <: AbstractBasis{NFuncs}
 construct an `N` dimensional polynomial basis by tensor product of `T`
 with a total of `NFuncs` functions.
-Note that `NFuncs` can be inferred from `T{nfuncs}`.
+Note that `NFuncs` can be inferred from `T{nfuncs}` as
+`NFuncs = nfuncs^N`.
 # Fields
     - `basis::AbstractBasis1D` the underlying 1D basis
 """
 struct TensorProductBasis{N,NFuncs,T<:AbstractBasis1D} <: AbstractBasis{NFuncs}
     basis::AbstractBasis1D
-    function TensorProductBasis{N}(B::T) where {N,T<:AbstractBasis1D{nfuncs}} where {nfuncs}
-        if !(N > 1)
-            msg = "Tensor product construction requires dimension > 1, got $N"
+    function TensorProductBasis(N::Int, B::T) where {T<:AbstractBasis1D{nfuncs}} where {nfuncs}
+        if (N < 1) || (N > 3)
+            msg = "Require 1 <= N <= 3, got N = $N"
             throw(ArgumentError(msg))
         end
         NFuncs = nfuncs^N
@@ -101,14 +97,14 @@ struct TensorProductBasis{N,NFuncs,T<:AbstractBasis1D} <: AbstractBasis{NFuncs}
 end
 
 """
-    TensorProductBasis(x::DP.PolyVar, dim::Int, order::Int; start = -1.0, stop = 1.0)
+    TensorProductBasis(dim::Int, order::Int; start = -1.0, stop = 1.0)
 construct a `dim` dimensional polynomial basis with variable `x` using a tensor
 product of `order` order `LagrangePolynomialBasis`. The polynomials are
 equispaced from `start` to `stop`.
 """
-function TensorProductBasis(x::DP.PolyVar, dim::Int,order::Int; start = -1.0, stop = 1.0)
-    basis_1d = LagrangePolynomialBasis(x, order, start = start, stop = stop)
-    return TensorProductBasis{dim}(basis_1d)
+function TensorProductBasis(dim::Int, order::Int; start = -1.0, stop = 1.0)
+    basis_1d = LagrangePolynomialBasis(order, start = start, stop = stop)
+    return TensorProductBasis(dim, basis_1d)
 end
 
 """
@@ -118,6 +114,14 @@ evaluate the basis `B` at the point `x`
 function (B::LagrangePolynomialBasis)(x::Number)
     return SP.evaluate(B.funcs, @SVector [x])
  end
+
+"""
+    (B::TensorProductBasis{1,NFuncs,T})(x::Number) where {T,NFuncs}
+evaluate a 1-D tensor product basis at the point `x`
+"""
+function (B::TensorProductBasis{1,NFuncs,T})(x::Number) where {T,NFuncs}
+    return B.basis(x)
+end
 
  """
      (B::TensorProductBasis{2,NFuncs,T})(x::Number,y::Number) where {T,NFuncs}

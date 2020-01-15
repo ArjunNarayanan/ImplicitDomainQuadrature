@@ -1,0 +1,92 @@
+"""
+    InterpolatingPolynomial{N,NFuncs,B<:AbstractBasis,T}
+interpolate a VECTOR of `N` with a basis `B` composed of `NFuncs` functions
+# Fields
+    - `coeffs::SMatrix{N,NFuncs,T}`
+    - `basis::B`
+"""
+mutable struct InterpolatingPolynomial{N,NFuncs,B<:AbstractBasis,T}
+    coeffs::SMatrix{N,NFuncs,T}
+    basis::B
+    function InterpolatingPolynomial(coeffs::SMatrix{N,NFuncs,T},
+        basis::B) where {B<:AbstractBasis{NFuncs}} where {N,NFuncs,T}
+
+        new{N,NFuncs,B,T}(coeffs,basis)
+    end
+end
+
+"""
+    InterpolatingPolynomial(T::Type{<:Number}, N::Int,
+        basis::AbstractBasis{NFuncs}) where {NFuncs}
+initialize an `InterpolatingPolynomial{N,NFuncs,T}` object with coefficients
+`zeros(T,N,NFuncs)`
+"""
+function InterpolatingPolynomial(T::Type{<:Number}, N::Int,
+    basis::AbstractBasis{NFuncs}) where {NFuncs}
+
+    coeffs = SMatrix{N,NFuncs}(zeros(T,N,NFuncs))
+    return InterpolatingPolynomial(coeffs,basis)
+end
+
+"""
+    InterpolatingPolynomial(N::Int, basis::AbstractBasis)
+initialize an `InterpolatingPolynomial` object with `Float64` coefficients.
+"""
+function InterpolatingPolynomial(N::Int, basis::AbstractBasis)
+    return InterpolatingPolynomial(Float64, N, basis)
+end
+
+"""
+    InterpolatingPolynomial(T::Type{<:Number}, N::Int, dim::Int, order::Int; start = -1.0, stop = 1.0)
+initialize a `dim` dimensional basis of order `order` and pass this to the
+`InterpolatingPolynomial` constructor.
+"""
+function InterpolatingPolynomial(T::Type{<:Number}, N::Int, dim::Int, order::Int; start = -1.0, stop = 1.0)
+    basis = TensorProductBasis(dim, order, start = start, stop = stop)
+    return InterpolatingPolynomial(T,N,basis)
+end
+
+
+"""
+    InterpolatingPolynomial(N::Int, dim::Int, order::Int; start = -1.0, stop = 1.0)
+initialize a `dim` dimensional basis of order `order` and pass this to the
+`InterpolatingPolynomial` constructor.
+"""
+function InterpolatingPolynomial(N::Int, dim::Int, order::Int; start = -1.0, stop = 1.0)
+    basis = TensorProductBasis(dim, order, start = start, stop = stop)
+    return InterpolatingPolynomial(N,basis)
+end
+
+"""
+    update!(P::InterpolatingPolynomial, coeffs::AbstractMatrix)
+update `P.coeffs = coeffs`
+"""
+function update!(P::InterpolatingPolynomial, coeffs::AbstractVecOrMat)
+    P.coeffs = coeffs
+end
+
+"""
+    (P::InterpolatingPolynomial{1})(x...)
+evaluate an interpolating polynomial at `x`, the result is a scalar
+"""
+function (P::InterpolatingPolynomial{1})(x...)
+    return ((P.coeffs)*(P.basis(x...)))[1]
+end
+
+
+"""
+    (P::InterpolatingPolynomial{N})(x...) where {N}
+evaluate an interpolating polynomial at `x`, the result is a vector
+of length `N`
+"""
+function (P::InterpolatingPolynomial{N})(x...) where {N}
+    return ((P.coeffs)*(P.basis(x...)))
+end
+
+"""
+    (P::InterpolatingPolynomial)(x::AbstractVector) where {N,NFuncs}
+evaluate the interpolating polynomial at a point vector `x`
+"""
+function (P::InterpolatingPolynomial)(x::AbstractVector) where {N,NFuncs}
+    return (P.coeffs)*(P.basis(x))
+end
