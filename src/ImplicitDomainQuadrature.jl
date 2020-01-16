@@ -13,6 +13,6 @@ include("basis.jl")
 include("interpolation.jl")
 
 export LagrangePolynomialBasis, TensorProductBasis,
-       InterpolatingPolynomial, update!
+       InterpolatingPolynomial, update!, interpolation_points
 
 end # module

@@ -154,3 +154,45 @@ evaluate a tensor product basis on a vector of points
          throw(ArgumentError(msg))
      end
  end
+
+"""
+    interpolation_points(B::TensorProductBasis{N,NFuncs,T}) where {NFuncs,T}
+return the interpolation points of the tensor product basis
+"""
+function interpolation_points(B::TensorProductBasis{1,NFuncs,T}) where {NFuncs,T}
+    return B.basis.points
+end
+
+function interpolation_points(B::TensorProductBasis{2,F,T}) where {T<:AbstractBasis1D{NFuncs}} where {F,NFuncs}
+    npoints = NFuncs^2
+    points = zeros(2,npoints)
+    count = 1
+    for i = 1:NFuncs
+        for j = 1:NFuncs
+            points[count] = B.basis.points[i]
+            count += 1
+            points[count] = B.basis.points[j]
+            count += 1
+        end
+    end
+    return SMatrix{2,npoints}(points)
+end
+
+function interpolation_points(B::TensorProductBasis{3,F,T}) where {T<:AbstractBasis1D{NFuncs}} where {F,NFuncs}
+    npoints = NFuncs^3
+    points = zeros(3,npoints)
+    count = 1
+    for i = 1:NFuncs
+        for j = 1:NFuncs
+            for k = 1:NFuncs
+                points[count] = B.basis.points[i]
+                count += 1
+                points[count] = B.basis.points[j]
+                count += 1
+                points[count] = B.basis.points[k]
+                count += 1
+            end
+        end
+    end
+    return SMatrix{3,npoints}(points)
+end
