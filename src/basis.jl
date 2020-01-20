@@ -116,44 +116,123 @@ function (B::LagrangePolynomialBasis)(x::Number)
  end
 
 """
-    (B::TensorProductBasis{1,NFuncs,T})(x::Number) where {T,NFuncs}
+    derivative(B::LagrangePolynomialBasis, x::Number)
+evaluate the derivative of basis `B` at the point `x`
+"""
+function derivative(B::LagrangePolynomialBasis, x::Number)
+    return SP.jacobian(B.funcs, @SVector [x])
+end
+
+"""
+    (B::TensorProductBasis{1})(x::Number)
 evaluate a 1-D tensor product basis at the point `x`
 """
-function (B::TensorProductBasis{1,NFuncs,T})(x::Number) where {T,NFuncs}
+function (B::TensorProductBasis{1})(x::Number)
     return B.basis(x)
 end
 
- """
-     (B::TensorProductBasis{2,NFuncs,T})(x::Number,y::Number) where {T,NFuncs}
- evaluate a 2-D tensor product basis at the point `(x,y)`
- """
- function (B::TensorProductBasis{2,NFuncs,T})(x::Number,y::Number) where {T,NFuncs}
-     return kron(B.basis(x), B.basis(y))
- end
+"""
+    gradient(B::TensorProductBasis{1}, x::Number)
+evaluate the derivative of the 1-D tensor product basis at `x`
+"""
+function gradient(B::TensorProductBasis{1}, x::Number)
+    return derivative(B.basis, x)
+end
 
- """
-     (B::TensorProductBasis{3,NFuncs,T})(x::Number,y::Number,z::Number) where {T,NFuncs}
- evaluate a 3-D tensor product basis at the point `(x,y,z)`
- """
- function (B::TensorProductBasis{3,NFuncs,T})(x::Number,y::Number,z::Number) where {T,NFuncs}
-     return kron(B.basis(x), B.basis(y), B.basis(z))
- end
+"""
+ (B::TensorProductBasis{2})(x::Number,y::Number)
+evaluate a 2-D tensor product basis at the point `(x,y)`
+"""
+function (B::TensorProductBasis{2})(x::Number,y::Number)
+    return kron(B.basis(x), B.basis(y))
+end
 
- """
-    (B::TensorProductBasis{N,NFuncs,T})(x::AbstractVector) where {N,NFuncs,T}
+"""
+    gradient(B::TensorProductBasis{2}, dir::Int, x::Number, y::Number)
+return the gradient of `B` at the point `x` along direction `dir`
+"""
+function gradient(B::TensorProductBasis{2}, dir::Int, x::Number, y::Number)
+    if dir == 1
+        dNx = derivative(B.basis, x)
+        Ny = B.basis(y)
+        return kron(dNx,Ny)
+    elseif dir == 2
+        Nx = B.basis(x)
+        dNy = derivative(B.basis, y)
+        return kron(Nx, dNy)
+    else
+        throw(BoundsError(B,dir))
+    end
+end
+
+"""
+ (B::TensorProductBasis{3})(x::Number,y::Number,z::Number)
+evaluate a 3-D tensor product basis at the point `(x,y,z)`
+"""
+function (B::TensorProductBasis{3})(x::Number,y::Number,z::Number)
+    return kron(B.basis(x), B.basis(y), B.basis(z))
+end
+
+"""
+    gradient(B::TensorProductBasis{3}, dir::Int, x::Number, y::Number, z::Number)
+evaluate the gradient of `B` at `(x,y,z)` along direction `dir`.
+"""
+function gradient(B::TensorProductBasis{3}, dir::Int, x::Number, y::Number, z::Number)
+    if dir == 1
+        dNx = derivative(B.basis, x)
+        Ny = B.basis(y)
+        Nz = B.basis(z)
+        return kron(dNx, Ny, Nz)
+    elseif dir == 2
+        Nx = B.basis(x)
+        dNy = derivative(B.basis, y)
+        Nz = B.basis(z)
+        return kron(Nx, dNy, Nz)
+    elseif dir == 3
+        Nx = B.basis(x)
+        Ny = B.basis(y)
+        dNz = derivative(B.basis, z)
+        return kron(Nx, Ny, dNz)
+    else
+        throw(BoundsError(B,dir))
+    end
+end
+
+"""
+(B::TensorProductBasis{N})(x::AbstractVector) where {N}
 evaluate a tensor product basis on a vector of points
- """
- function (B::TensorProductBasis{N,NFuncs,T})(x::AbstractVector) where {N,NFuncs,T}
-     @assert length(x) == N
-     if N == 2
-         return B(x[1],x[2])
-     elseif N == 3
-         return B(x[1],x[2],x[3])
-     else
-         msg = "Evaluation of tensor product basis currently supported for 2D and 3D points only"
-         throw(ArgumentError(msg))
-     end
- end
+"""
+function (B::TensorProductBasis{N})(x::AbstractVector) where {N}
+    @assert length(x) == N
+    if N == 1
+        return B(x[1])
+    elseif N == 2
+        return B(x[1],x[2])
+    elseif N == 3
+        return B(x[1],x[2],x[3])
+    else
+        msg = "Evaluation of tensor product basis currently supported for 1 <= dimension <= 3 only"
+        throw(ArgumentError(msg))
+    end
+end
+
+"""
+    gradient(B::TensorProductBasis{N}, dir::Int, x::AbstractVector) where {N}
+evaluate the gradient of `B` along direction `dir` at the point vector `x`
+"""
+function gradient(B::TensorProductBasis{N}, dir::Int, x::AbstractVector) where {N}
+    @assert length(x) == N
+    if N == 1
+        return gradient(B, x[1])
+    elseif N == 2
+        return gradient(B, dir, x[1], x[2])
+    elseif N == 3
+        return gradient(B, dir, x[1], x[2], x[3])
+    else
+        msg = "Evaluation of tensor product basis currently supported for 2D and 3D points only"
+        throw(ArgumentError(msg))
+    end
+end
 
 """
     interpolation_points(B::TensorProductBasis{N,NFuncs,T}) where {NFuncs,T}
