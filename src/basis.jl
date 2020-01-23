@@ -124,6 +124,15 @@ function derivative(B::LagrangePolynomialBasis, x::Number)
 end
 
 """
+    value_and_derivative(B::LagrangePolynomialBasis, x::Number)
+return `(v,d)` where `v` is a vector of the polynomial basis values and `d` is
+a vector of the derivative values of the polynomial basis at the point `x`.
+"""
+function value_and_derivative(B::LagrangePolynomialBasis, x::Number)
+    return SP.evaluate_and_jacobian(B.funcs, @SVector [x])
+end
+
+"""
     (B::TensorProductBasis{1})(x::Number)
 evaluate a 1-D tensor product basis at the point `x`
 """
@@ -166,6 +175,17 @@ function gradient(B::TensorProductBasis{2}, dir::Int, x::Number, y::Number)
 end
 
 """
+    gradient(B::TensorProductBasis{2}, x::Number, y::Number)
+returns an `(N,2)` matrix, where row `I` is the (2D) gradient vector of the `I`th basis
+function. Here `N` is the total number of basis functions.
+"""
+function gradient(B::TensorProductBasis{2}, x::Number, y::Number)
+    col1 = gradient(B,1,x,y)
+    col2 = gradient(B,2,x,y)
+    return hcat(col1,col2)
+end
+
+"""
  (B::TensorProductBasis{3})(x::Number,y::Number,z::Number)
 evaluate a 3-D tensor product basis at the point `(x,y,z)`
 """
@@ -199,6 +219,23 @@ function gradient(B::TensorProductBasis{3}, dir::Int, x::Number, y::Number, z::N
 end
 
 """
+    gradient(B::TensorProductBasis{3}, x::Number, y::Number, z::Number)
+returns an `(N,3)` matrix, where row `I` is the (2D) gradient vector of the `I`th basis
+function. Here `N` is the total number of basis functions.
+"""
+function gradient(B::TensorProductBasis{3}, x::Number, y::Number, z::Number)
+    Nx = B.basis(x)
+    Ny = B.basis(y)
+    Nz = B.basis(z)
+
+    dNx = derivative(B.basis, x)
+    dNy = derivative(B.basis, y)
+    dNz = derivative(B.basis, z)
+
+    return hcat(kron(dNx,Ny,Nz), kron(Nx,dNy,Nz), kron(Nx,Ny,dNz))
+end
+
+"""
 (B::TensorProductBasis{N})(x::AbstractVector) where {N}
 evaluate a tensor product basis on a vector of points
 """
@@ -229,7 +266,26 @@ function gradient(B::TensorProductBasis{N}, dir::Int, x::AbstractVector) where {
     elseif N == 3
         return gradient(B, dir, x[1], x[2], x[3])
     else
-        msg = "Evaluation of tensor product basis currently supported for 2D and 3D points only"
+        msg = "Evaluation of tensor product basis currently supported for 1 <= dim <= 3, got $N"
+        throw(ArgumentError(msg))
+    end
+end
+
+"""
+    gradient(B::TensorProductBasis{dim}, x::AbstractVector) where {dim}
+return an `(N,dim)` matrix such that the `I`th row is the gradient of basis `I`.
+Here `N` is the total number of basis functions.
+"""
+function gradient(B::TensorProductBasis{dim}, x::AbstractVector) where {dim}
+    @assert length(x) == dim
+    if dim == 1
+        return gradient(B, x[1])
+    elseif dim == 2
+        return gradient(B, x[1], x[2])
+    elseif dim == 3
+        return gradient(B, x[1], x[2], x[3])
+    else
+        msg = "Evaluation of tensor product basis gradient currently supported for 1 <= dim <= 3, got $dim"
         throw(ArgumentError(msg))
     end
 end

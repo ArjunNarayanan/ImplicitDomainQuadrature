@@ -67,26 +67,48 @@ end
 
 """
     (P::InterpolatingPolynomial{1})(x...)
-evaluate an interpolating polynomial at `x`, the result is a scalar
+evaluate `P` at `x`, the result is a scalar
 """
 function (P::InterpolatingPolynomial{1})(x...)
     return ((P.coeffs)*(P.basis(x...)))[1]
 end
 
+"""
+    gradient(P::InterpolatingPolynomial)(x)
+return the gradient of `P` evaluated at `x`.
+"""
+function gradient(P::InterpolatingPolynomial, x...)
+    return ((P.coeffs)*(gradient(P.basis, x...)))
+end
 
 """
-    (P::InterpolatingPolynomial{N})(x...) where {N}
-evaluate an interpolating polynomial at `x`, the result is a vector
-of length `N`
+    gradient(P::InterpolatingPolynomial, dir::Int, x...)
+return the gradient of `P` along direction `dir` evaluated at `x`.
 """
-function (P::InterpolatingPolynomial{N})(x...) where {N}
+function gradient(P::InterpolatingPolynomial, dir::Int, x...)
+    return (P.coeffs)*(gradient(P.basis, dir, x...))
+end
+
+"""
+    (P::InterpolatingPolynomial)(x...)
+evaluate `P` at `x`
+"""
+function (P::InterpolatingPolynomial)(x...)
     return ((P.coeffs)*(P.basis(x...)))
 end
 
 """
-    (P::InterpolatingPolynomial)(x::AbstractVector) where {N,NFuncs}
-evaluate the interpolating polynomial at a point vector `x`
+    (P::InterpolatingPolynomial)(x::AbstractVector)
+evaluate `P` at the point vector `x`
 """
-function (P::InterpolatingPolynomial)(x::AbstractVector) where {N,NFuncs}
+function (P::InterpolatingPolynomial)(x::AbstractVector)
     return (P.coeffs)*(P.basis(x))
+end
+
+"""
+    gradient(P::InterpolatingPolynomial, x::AbstractVector)
+evaluate the gradient of `P` at the point vector `x`
+"""
+function gradient(P::InterpolatingPolynomial, x::AbstractVector)
+    return (P.coeffs)*(gradient(P.basis, x))
 end
