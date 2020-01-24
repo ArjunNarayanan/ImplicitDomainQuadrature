@@ -1,6 +1,6 @@
 module ImplicitDomainQuadrature
 
-using StaticArrays
+using StaticArrays, BranchAndPrune, RangeEnclosures
 import DynamicPolynomials
 import StaticPolynomials
 
@@ -11,9 +11,9 @@ SP = StaticPolynomials
 include("lagrange_polynomials.jl")
 include("basis.jl")
 include("interpolation.jl")
+include("bounds.jl")
 
-export LagrangePolynomialBasis, TensorProductBasis,
-       InterpolatingPolynomial, update!, interpolation_points,
-       gradient
+export TensorProductBasis, InterpolatingPolynomial, update!, interpolation_points,
+       gradient, sign
 
 end # module
