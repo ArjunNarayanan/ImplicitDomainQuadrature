@@ -67,10 +67,10 @@ function BranchAndPrune.bisect(::SignSearch, interval::IntervalBox)
 end
 
 """
-    search(f, interval, algorithm, tol, order)
+    run_search(f, interval, algorithm, tol, order)
 run a `BranchAndPrune` search until the sign of `f` in the given interval is determined
 """
-function search(f, interval, algorithm, tol, order)
+function run_search(f, interval, algorithm, tol, order)
 
     search = SignSearch(f, interval, algorithm, tol, order)
     local endtree = nothing
@@ -81,13 +81,13 @@ function search(f, interval, algorithm, tol, order)
 end
 
 """
-    sign(f::Function, int::Interval)
+    sign(f, int::Interval)
 return
 - `+1` if `f` is uniformly positive on `int`
 - `-1` if `f` is uniformly negative on `int`
 - `0` if `f` has at least one zero crossing in `int` (f assumed continuous)
 """
-function Base.sign(f::Function, int::Interval; algorithm = :TaylorModels, tol = 1e-3, order = 5)
+function Base.sign(f::Function, int::IntervalBox; algorithm = :TaylorModels, tol = 1e-3, order = 5)
     tree, search = run_search(f,int,algorithm,tol,order)
     if search.found_positive && search.found_negative
         return 0
