@@ -20,6 +20,14 @@ end
         basis::AbstractBasis{NFuncs}) where {NFuncs}
 initialize an `InterpolatingPolynomial{N,NFuncs,T}` object with coefficients
 `zeros(T,N,NFuncs)`
+    InterpolatingPolynomial(N::Int, basis::AbstractBasis)
+initialize an `InterpolatingPolynomial` object with `Float64` coefficients.
+    InterpolatingPolynomial(T::Type{<:Number}, N::Int, dim::Int, order::Int; start = -1.0, stop = 1.0)
+initialize a `dim` dimensional basis of order `order` and pass this to the
+`InterpolatingPolynomial` constructor.
+    InterpolatingPolynomial(N::Int, dim::Int, order::Int; start = -1.0, stop = 1.0)
+initialize a `dim` dimensional basis of order `order` and pass this to the
+`InterpolatingPolynomial` constructor.
 """
 function InterpolatingPolynomial(T::Type{<:Number}, N::Int,
     basis::AbstractBasis{NFuncs}) where {NFuncs}
@@ -28,30 +36,15 @@ function InterpolatingPolynomial(T::Type{<:Number}, N::Int,
     return InterpolatingPolynomial(coeffs,basis)
 end
 
-"""
-    InterpolatingPolynomial(N::Int, basis::AbstractBasis)
-initialize an `InterpolatingPolynomial` object with `Float64` coefficients.
-"""
 function InterpolatingPolynomial(N::Int, basis::AbstractBasis)
     return InterpolatingPolynomial(Float64, N, basis)
 end
 
-"""
-    InterpolatingPolynomial(T::Type{<:Number}, N::Int, dim::Int, order::Int; start = -1.0, stop = 1.0)
-initialize a `dim` dimensional basis of order `order` and pass this to the
-`InterpolatingPolynomial` constructor.
-"""
 function InterpolatingPolynomial(T::Type{<:Number}, N::Int, dim::Int, order::Int; start = -1.0, stop = 1.0)
     basis = TensorProductBasis(dim, order, start = start, stop = stop)
     return InterpolatingPolynomial(T,N,basis)
 end
 
-
-"""
-    InterpolatingPolynomial(N::Int, dim::Int, order::Int; start = -1.0, stop = 1.0)
-initialize a `dim` dimensional basis of order `order` and pass this to the
-`InterpolatingPolynomial` constructor.
-"""
 function InterpolatingPolynomial(N::Int, dim::Int, order::Int; start = -1.0, stop = 1.0)
     basis = TensorProductBasis(dim, order, start = start, stop = stop)
     return InterpolatingPolynomial(N,basis)
@@ -68,9 +61,21 @@ end
 """
     (P::InterpolatingPolynomial{1})(x...)
 evaluate `P` at `x`, the result is a scalar
+    (P::InterpolatingPolynomial)(x...)
+evaluate `P` at `x`
+    (P::InterpolatingPolynomial)(x::AbstractVector)
+evaluate `P` at the point vector `x`
 """
 function (P::InterpolatingPolynomial{1})(x...)
     return ((P.coeffs)*(P.basis(x...)))[1]
+end
+
+function (P::InterpolatingPolynomial)(x...)
+    return ((P.coeffs)*(P.basis(x...)))
+end
+
+function (P::InterpolatingPolynomial)(x::AbstractVector)
+    return (P.coeffs)*(P.basis(x))
 end
 
 """
@@ -87,22 +92,6 @@ return the gradient of `P` along direction `dir` evaluated at `x`.
 """
 function gradient(P::InterpolatingPolynomial, dir::Int, x...)
     return (P.coeffs)*(gradient(P.basis, dir, x...))
-end
-
-"""
-    (P::InterpolatingPolynomial)(x...)
-evaluate `P` at `x`
-"""
-function (P::InterpolatingPolynomial)(x...)
-    return ((P.coeffs)*(P.basis(x...)))
-end
-
-"""
-    (P::InterpolatingPolynomial)(x::AbstractVector)
-evaluate `P` at the point vector `x`
-"""
-function (P::InterpolatingPolynomial)(x::AbstractVector)
-    return (P.coeffs)*(P.basis(x))
 end
 
 """

@@ -34,6 +34,14 @@ function min_diam(box::IntervalBox)
 end
 
 """
+    Base.muladd(tm::TaylorModelN{N,T,S}, a::Number, b::Number) where {N,T,S}
+overloading `muladd` to avoid an error
+"""
+function Base.muladd(tm::TaylorModelN{N,T,S}, a::Number, b::Number) where {N,T,S}
+    return a*tm+b
+end
+
+"""
     BranchAndPrune.process(search::SignSearch, interval::IntervalBox)
 process the given `interval` to determine the sign of `search.f` in this interval
 """
@@ -97,5 +105,15 @@ function Base.sign(f::Function, int::IntervalBox; algorithm = :TaylorModels, tol
         return 1
     else
         return -1
+    end
+end
+
+function Base.sign(P::InterpolatingPolynomial{1,NF,B}, int::IntervalBox; algorithm = :TaylorModels, tol = 1e-3, order = 5) where {B<:TensorProductBasis{dim}}
+    max_coeff = maximum(P.coeffs)
+    min_coeff = minimum(P.coeffs)
+    if max_coeff > 0 && min_coeff < 0
+        return 0
+    else
+        return sign
     end
 end
