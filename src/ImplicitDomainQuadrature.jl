@@ -1,6 +1,7 @@
 module ImplicitDomainQuadrature
 
-using StaticArrays, BranchAndPrune, RangeEnclosures
+using StaticArrays, BranchAndPrune, TaylorModels
+using RangeEnclosures
 import DynamicPolynomials
 import StaticPolynomials
 

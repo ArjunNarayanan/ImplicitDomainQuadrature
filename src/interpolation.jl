@@ -81,23 +81,23 @@ end
 """
     gradient(P::InterpolatingPolynomial)(x)
 return the gradient of `P` evaluated at `x`.
+    gradient(P::InterpolatingPolynomial, dir::Int, x...)
+return the gradient of `P` along direction `dir` evaluated at `x`.
+    gradient(P::InterpolatingPolynomial, x::AbstractVector)
+evaluate the gradient of `P` at the point vector `x`
 """
 function gradient(P::InterpolatingPolynomial, x...)
     return ((P.coeffs)*(gradient(P.basis, x...)))
 end
 
-"""
-    gradient(P::InterpolatingPolynomial, dir::Int, x...)
-return the gradient of `P` along direction `dir` evaluated at `x`.
-"""
 function gradient(P::InterpolatingPolynomial, dir::Int, x...)
     return (P.coeffs)*(gradient(P.basis, dir, x...))
 end
 
-"""
-    gradient(P::InterpolatingPolynomial, x::AbstractVector)
-evaluate the gradient of `P` at the point vector `x`
-"""
+function gradient(P::InterpolatingPolynomial{1}, dir::Int, x...)
+    return ((P.coeffs)*(gradient(P.basis, dir, x...)))[1]
+end
+
 function gradient(P::InterpolatingPolynomial, x::AbstractVector)
     return (P.coeffs)*(gradient(P.basis, x))
 end

@@ -4,7 +4,7 @@ a `BranchAndPrune` search type that is used to determine the sign of
 a function over a given interval
 """
 mutable struct SignSearch{N,T} <: AbstractBreadthFirstSearch{IntervalBox{N,T}}
-    f::Function
+    f
     initial::IntervalBox{N,T}
     algorithm::Symbol
     tol::Real
@@ -12,7 +12,7 @@ mutable struct SignSearch{N,T} <: AbstractBreadthFirstSearch{IntervalBox{N,T}}
     found_negative::Bool
     breached_tolerance::Bool
     order::Int
-    function SignSearch(f::Function, initial::IntervalBox{N,T},
+    function SignSearch(f, initial::IntervalBox{N,T},
         algorithm::Symbol, tol::Real, order::Int) where {N,T}
 
         if tol <= 0
@@ -34,10 +34,18 @@ function min_diam(box::IntervalBox)
 end
 
 """
-    Base.muladd(tm::TaylorModelN{N,T,S}, a::Number, b::Number) where {N,T,S}
+    Base.muladd(tm::TaylorModelN, a::Number, b::Number)
 overloading `muladd` to avoid an error
 """
-function Base.muladd(tm::TaylorModelN{N,T,S}, a::Number, b::Number) where {N,T,S}
+function Base.muladd(tm::TaylorModelN, a::Number, b::Number)
+    return a*tm+b
+end
+
+function Base.muladd(a::Number, tm::TaylorModelN, b::Number)
+    return a*tm+b
+end
+
+function Base.muladd(a::TaylorModelN, tm::TaylorModelN, b::Number)
     return a*tm+b
 end
 
@@ -47,7 +55,7 @@ process the given `interval` to determine the sign of `search.f` in this interva
 """
 function BranchAndPrune.process(search::SignSearch, interval::IntervalBox)
 
-    f_range = enclose(search.f, interval, search.algorithm, order = search.order)
+    f_range = enclose((x...) -> search.f(x...), interval, search.algorithm, order = search.order)
 
     if (search.found_positive && search.found_negative) || (search.breached_tolerance)
         return :discard, interval
@@ -95,7 +103,7 @@ return
 - `-1` if `f` is uniformly negative on `int`
 - `0` if `f` has at least one zero crossing in `int` (f assumed continuous)
 """
-function Base.sign(f::Function, int::IntervalBox; algorithm = :TaylorModels, tol = 1e-3, order = 5)
+function Base.sign(f, int::IntervalBox; algorithm = :TaylorModels, tol = 1e-3, order = 5)
     tree, search = run_search(f,int,algorithm,tol,order)
     if search.found_positive && search.found_negative
         return 0
@@ -108,12 +116,16 @@ function Base.sign(f::Function, int::IntervalBox; algorithm = :TaylorModels, tol
     end
 end
 
-function Base.sign(P::InterpolatingPolynomial{1,NF,B}, int::IntervalBox; algorithm = :TaylorModels, tol = 1e-3, order = 5) where {B<:TensorProductBasis{dim}}
+"""
+    Base.sign(P::InterpolatingPolynomial{1}, int::IntervalBox; algorithm = :TaylorModels, tol = 1e-3, order = 5)
+special function for an interpolating polynomial type.
+"""
+function Base.sign(P::InterpolatingPolynomial{1}, int::IntervalBox; algorithm = :TaylorModels, tol = 1e-3, order = 5)
     max_coeff = maximum(P.coeffs)
     min_coeff = minimum(P.coeffs)
     if max_coeff > 0 && min_coeff < 0
         return 0
     else
-        return sign
+        return sign((x...) -> P(x...), int, algorithm = algorithm, tol = tol, order = order)
     end
 end

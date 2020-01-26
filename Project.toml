@@ -10,6 +10,7 @@ IntervalArithmetic = "d1acc4aa-44c8-5952-acd4-ba5d80a2a253"
 RangeEnclosures = "1b4d18b6-9e5d-11e9-236c-f792b01831f8"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 StaticPolynomials = "62e018b1-6e46-5407-a5a7-97d4fbcae734"
+TaylorModels = "314ce334-5f6e-57ae-acf6-00b6e903104a"
 
 [compat]
 DynamicPolynomials = "0.3"
