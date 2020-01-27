@@ -74,10 +74,6 @@ function (P::InterpolatingPolynomial)(x...)
     return ((P.coeffs)*(P.basis(x...)))
 end
 
-function (P::InterpolatingPolynomial)(x::AbstractVector)
-    return (P.coeffs)*(P.basis(x))
-end
-
 """
     gradient(P::InterpolatingPolynomial)(x)
 return the gradient of `P` evaluated at `x`.
