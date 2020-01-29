@@ -19,7 +19,7 @@ A basis of `N` Lagrange polynomials. The polynomial order is `N + 1`.
 """
 struct LagrangePolynomialBasis{NFuncs} <: AbstractBasis1D{NFuncs}
     funcs::SP.PolynomialSystem{NFuncs,1}
-    points::SVector{NFuncs}
+    points::SMatrix{1,NFuncs}
     function LagrangePolynomialBasis(funcs::AbstractVector{DP.Polynomial{C,T1}},
         points::AbstractVector{T2}) where {C,T1,T2}
 
@@ -86,13 +86,15 @@ Note that `NFuncs` can be inferred from `T{nfuncs}` as
 """
 struct TensorProductBasis{N,NFuncs,T<:AbstractBasis1D} <: AbstractBasis{NFuncs}
     basis::AbstractBasis1D
+    points::SMatrix{N,NFuncs}
     function TensorProductBasis(N::Int, B::T) where {T<:AbstractBasis1D{nfuncs}} where {nfuncs}
         if (N < 1) || (N > 3)
             msg = "Require 1 <= N <= 3, got N = $N"
             throw(ArgumentError(msg))
         end
         NFuncs = nfuncs^N
-        new{N,NFuncs,T}(B)
+        points = interpolation_points(N,B)
+        new{N,NFuncs,T}(B,points)
     end
 end
 
@@ -294,40 +296,38 @@ end
     interpolation_points(B::TensorProductBasis{N,NFuncs,T}) where {NFuncs,T}
 return the interpolation points of the tensor product basis
 """
-function interpolation_points(B::TensorProductBasis{1,NFuncs,T}) where {NFuncs,T}
-    return B.basis.points
-end
-
-function interpolation_points(B::TensorProductBasis{2,F,T}) where {T<:AbstractBasis1D{NFuncs}} where {F,NFuncs}
-    npoints = NFuncs^2
-    points = zeros(2,npoints)
-    count = 1
-    for i = 1:NFuncs
-        for j = 1:NFuncs
-            points[count] = B.basis.points[i]
-            count += 1
-            points[count] = B.basis.points[j]
-            count += 1
-        end
-    end
-    return SMatrix{2,npoints}(points)
-end
-
-function interpolation_points(B::TensorProductBasis{3,F,T}) where {T<:AbstractBasis1D{NFuncs}} where {F,NFuncs}
-    npoints = NFuncs^3
-    points = zeros(3,npoints)
-    count = 1
-    for i = 1:NFuncs
-        for j = 1:NFuncs
-            for k = 1:NFuncs
-                points[count] = B.basis.points[i]
+function interpolation_points(N::Int, B::AbstractBasis1D{NF}) where {NF}
+    if N == 1
+        return B.points
+    elseif N == 2
+        npoints = NF^2
+        points = zeros(2,npoints)
+        count = 1
+        for i = 1:NF
+            for j = 1:NF
+                points[count] = B.points[i]
                 count += 1
-                points[count] = B.basis.points[j]
-                count += 1
-                points[count] = B.basis.points[k]
+                points[count] = B.points[j]
                 count += 1
             end
         end
+        return SMatrix{2,npoints}(points)
+    elseif N == 3
+        npoints = NF^3
+        points = zeros(3,npoints)
+        count = 1
+        for i = 1:NF
+            for j = 1:NF
+                for k = 1:NF
+                    points[count] = B.points[i]
+                    count += 1
+                    points[count] = B.points[j]
+                    count += 1
+                    points[count] = B.points[k]
+                    count += 1
+                end
+            end
+        end
+        return SMatrix{3,npoints}(points)
     end
-    return SMatrix{3,npoints}(points)
 end
