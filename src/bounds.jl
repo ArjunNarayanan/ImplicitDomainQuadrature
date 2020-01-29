@@ -116,14 +116,31 @@ function Base.sign(f, int::IntervalBox; algorithm = :TaylorModels, tol = 1e-3, o
     end
 end
 
+function extremal_coeffs_in_box(P::InterpolatingPolynomial{1}, box::IntervalBox)
+
+    max_coeff = -Inf
+    min_coeff = Inf
+    points = P.basis.points
+    dim,npoints = size(points)
+    for i in 1:npoints
+        p = view(points,:,i)
+        if p in box
+            coeff = P.coeffs[i]
+            min_coeff = min(min_coeff,coeff)
+            max_coeff = max(max_coeff,coeff)
+        end
+    end
+    return max_coeff, min_coeff
+end
+
 """
     Base.sign(P::InterpolatingPolynomial{1}, int::IntervalBox; algorithm = :TaylorModels, tol = 1e-3, order = 5)
 special function for an interpolating polynomial type.
 """
 function Base.sign(P::InterpolatingPolynomial{1}, int::IntervalBox; algorithm = :TaylorModels, tol = 1e-3, order = 5)
-    max_coeff = maximum(P.coeffs)
-    min_coeff = minimum(P.coeffs)
-    if max_coeff > 0 && min_coeff < 0
+
+    max_coeff, min_coeff = extremal_coeffs_in_box(P,int)
+    if !isinf(max_coeff) && !isinf(min_coeff) && max_coeff > 0 && min_coeff < 0
         return 0
     else
         return sign((x...) -> P(x...), int, algorithm = algorithm, tol = tol, order = order)
