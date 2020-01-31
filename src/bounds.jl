@@ -21,7 +21,8 @@ mutable struct SignSearch{N,T} <: AbstractBreadthFirstSearch{IntervalBox{N,T}}
         if order < 1
             throw(ArgumentError("Order must be > 0, got $order"))
         end
-        new{N,T}(f,initial,algorithm,tol,false,false,false,order)
+        relative_tolerance = tol*diam(initial)
+        new{N,T}(f,initial,algorithm,relative_tolerance,false,false,false,order)
     end
 end
 
