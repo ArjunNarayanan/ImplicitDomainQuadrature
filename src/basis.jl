@@ -12,7 +12,7 @@ abstract type AbstractBasis1D{N} <: AbstractBasis{N} end
 
 """
     LagrangePolynomialBasis{N} <: AbstractBasis1D{N}
-A basis of `N` Lagrange polynomials. The polynomial order is `N + 1`.
+A basis of `N` Lagrange polynomials. The polynomial order is `N - 1`.
 # Fields
     - `funcs::PolynomialSystem{N,1}` - a system of static polynomials
     - `points::StaticVector{N}` - a static vector of support points
@@ -21,7 +21,7 @@ struct LagrangePolynomialBasis{NFuncs} <: AbstractBasis1D{NFuncs}
     funcs::SP.PolynomialSystem{NFuncs,1}
     points::SMatrix{1,NFuncs}
     function LagrangePolynomialBasis(funcs::AbstractVector{DP.Polynomial{C,T1}},
-        points::AbstractVector{T2}) where {C,T1,T2}
+        points::AbstractVector{T2}) where {C,T1<:Real,T2<:Real}
 
         NFuncs = length(funcs)
         order = NFuncs - 1
@@ -34,9 +34,10 @@ struct LagrangePolynomialBasis{NFuncs} <: AbstractBasis1D{NFuncs}
             msg = "Number of functions must be equal to number of points"
             throw(ArgumentError(msg))
         end
-        if !isapprox(sum(funcs),1.0)
+        if !isapprox(sum(funcs),one(T1))
             val = sum(funcs)
             msg = "Polynomial basis must sum to 1.0, got $val"
+            throw(ArgumentError(msg))
         end
         vars = funcs[1].x.vars[1]
         for f in funcs
@@ -82,10 +83,11 @@ with a total of `NFuncs` functions.
 Note that `NFuncs` can be inferred from `T{nfuncs}` as
 `NFuncs = nfuncs^N`.
 # Fields
-    - `basis::AbstractBasis1D` the underlying 1D basis
+    - `basis::T` the underlying 1D basis
+    - `points::SMatrix{N,NFuncs}` a matrix of point vectors
 """
 struct TensorProductBasis{N,NFuncs,T<:AbstractBasis1D} <: AbstractBasis{NFuncs}
-    basis::AbstractBasis1D
+    basis::T
     points::SMatrix{N,NFuncs}
     function TensorProductBasis(N::Int, B::T) where {T<:AbstractBasis1D{nfuncs}} where {nfuncs}
         if (N < 1) || (N > 3)

@@ -9,7 +9,7 @@ construct the polynomial with variable `x` from its `roots` by skipping the
 `skipindex`th root.
 """
 function polynomial_from_roots(x::DP.PolyVar,roots::AbstractVector{T},skipindex::Int) where {T}
- f = 0.0*x + 1.0
+ f = zero(T)*x + one(T)
  for (idx,r) in enumerate(roots)
      if idx != skipindex
          f *= (x - r)
@@ -24,7 +24,7 @@ return the normalization factor such that the polynomial evaluated on the
 `skipindex`th root has value `1.0`.
 """
 function normalization(roots::AbstractVector{T},skipindex::Int) where {T}
- v = 1.0
+ v = one(T)
  a = roots[skipindex]
  for (idx,r) in enumerate(roots)
      if idx != skipindex
