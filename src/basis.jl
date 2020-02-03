@@ -1,3 +1,5 @@
+import Base: ==
+
 """
     AbstractBasis{N}
 abstract supertype for a function basis with `N` functions
@@ -77,6 +79,25 @@ function LagrangePolynomialBasis(order::Int; start = -1.0, stop = 1.0)
 end
 
 """
+    Base.isequal(b1::LagrangePolynomialBasis{NF},b2::LagrangePolynomialBasis{NF}) where {NF}
+returns true if `b1` and `b2` have the same `funcs` and `points`.
+"""
+function Base.isequal(b1::LagrangePolynomialBasis{NF},b2::LagrangePolynomialBasis{NF}) where {NF}
+    flag = true
+    flag = flag && b1.funcs.polys == b2.funcs.polys
+    flag = flag && b1.points == b2.points
+    return flag
+end
+
+"""
+    ==(b1::LagrangePolynomialBasis{NF},b2::LagrangePolynomialBasis{NF}) where {NF}
+returns true if `b1` and `b2` have the same `funcs` and `points`.
+"""
+function ==(b1::LagrangePolynomialBasis{NF},b2::LagrangePolynomialBasis{NF}) where {NF}
+    return isequal(b1,b2)
+end
+
+"""
     TensorProductBasis{N,NFuncs,T<:AbstractBasis1D} <: AbstractBasis{NFuncs}
 construct an `N` dimensional polynomial basis by tensor product of `T`
 with a total of `NFuncs` functions.
@@ -86,17 +107,33 @@ Note that `NFuncs` can be inferred from `T{nfuncs}` as
     - `basis::T` the underlying 1D basis
     - `points::SMatrix{N,NFuncs}` a matrix of point vectors
 """
-struct TensorProductBasis{N,NFuncs,T<:AbstractBasis1D} <: AbstractBasis{NFuncs}
+# struct TensorProductBasis{N,NFuncs,T<:AbstractBasis1D} <: AbstractBasis{NFuncs}
+#     basis::T
+#     points::SMatrix{N,NFuncs}
+#     function TensorProductBasis(N::Int, B::T) where {T<:AbstractBasis1D{nfuncs}} where {nfuncs}
+#         if (N < 1) || (N > 3)
+#             msg = "Require 1 <= N <= 3, got N = $N"
+#             throw(ArgumentError(msg))
+#         end
+#         NFuncs = nfuncs^N
+#         points = interpolation_points(N,B)
+#         new{N,NFuncs,T}(B,points)
+#     end
+# end
+
+abstract type AbstractTensorProductBasis{D,T,NF} <: AbstractBasis{NF} end
+
+struct TensorProductBasis{D,T,NF} <: AbstractTensorProductBasis{D,T,NF}
     basis::T
-    points::SMatrix{N,NFuncs}
-    function TensorProductBasis(N::Int, B::T) where {T<:AbstractBasis1D{nfuncs}} where {nfuncs}
-        if (N < 1) || (N > 3)
-            msg = "Require 1 <= N <= 3, got N = $N"
+    points::SMatrix{D,NF}
+    function TensorProductBasis(D::Int, B::T) where {T<:AbstractBasis1D{N1D}} where {N1D}
+        if (D < 1) || (D > 3)
+            msg = "Require 1 <= D <= 3, got D = $D"
             throw(ArgumentError(msg))
         end
-        NFuncs = nfuncs^N
-        points = interpolation_points(N,B)
-        new{N,NFuncs,T}(B,points)
+        NF = N1D^D
+        points = interpolation_points(D,B)
+        new{D,T,NF}(B,points)
     end
 end
 
@@ -109,6 +146,22 @@ equispaced from `start` to `stop`.
 function TensorProductBasis(dim::Int, order::Int; start = -1.0, stop = 1.0)
     basis_1d = LagrangePolynomialBasis(order, start = start, stop = stop)
     return TensorProductBasis(dim, basis_1d)
+end
+
+"""
+    Base.isequal(tp1::TensorProductBasis{D,T,NF}, tp2::TensorProductBasis{D,T,NF}) where {D,T,NF}
+returns `true` if `tp1` and `tp2` have identical `basis` and `points`, `false` otherwise.
+"""
+function Base.isequal(tp1::TensorProductBasis{D,T,NF}, tp2::TensorProductBasis{D,T,NF}) where {D,T,NF}
+    return tp1.basis == tp2.basis && tp1.points == tp2.points
+end
+
+"""
+    ==(tp1::TensorProductBasis{D,T,NF}, tp2::TensorProductBasis{D,T,NF}) where {D,T,NF}
+returns `true` if `tp1` and `tp2` have identical `basis` and `points`, `false` otherwise.
+"""
+function ==(tp1::TensorProductBasis{D,T,NF}, tp2::TensorProductBasis{D,T,NF}) where {D,T,NF}
+    return tp1.basis == tp2.basis && tp1.points == tp2.points
 end
 
 """
