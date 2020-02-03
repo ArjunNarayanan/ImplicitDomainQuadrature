@@ -344,7 +344,9 @@ uuid = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
 [[RangeEnclosures]]
 deps = ["DynamicPolynomials", "IntervalArithmetic", "IntervalOptimisation", "Reexport", "Requires", "SDPA", "SemialgebraicSets", "SumOfSquares", "TaylorModels"]
-path = "/home/arjun/.julia/dev/RangeEnclosures"
+git-tree-sha1 = "bc8e22a83fdb09590f7c216010e072d7b0bdef61"
+repo-rev = "master"
+repo-url = "https://github.com/JuliaReach/RangeEnclosures.jl.git"
 uuid = "1b4d18b6-9e5d-11e9-236c-f792b01831f8"
 version = "0.1.1"
 
