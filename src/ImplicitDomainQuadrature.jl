@@ -12,7 +12,7 @@ SP = StaticPolynomials
 include("lagrange_polynomials.jl")
 include("basis.jl")
 include("interpolation.jl")
-# include("bounds.jl")
+include("bounds.jl")
 
 export TensorProductBasis, InterpolatingPolynomial, update!, interpolation_points,
        gradient, sign, ==, isequal
