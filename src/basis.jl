@@ -4,14 +4,13 @@ import Base: ==
     AbstractBasis{N}
 abstract supertype for a function basis with `N` functions
 """
-abstract type AbstractBasis{N,T} end
+abstract type AbstractBasis{N} end
 
 """
-    AbstractBasis1D{N,T}
-abstract supertype for a 1D function basis with `N` functions with type `T`
-coefficients
+    AbstractBasis1D{N}
+abstract supertype for a 1D function basis with `N` functions
 """
-abstract type AbstractBasis1D{N,T} <: AbstractBasis{N,T} end
+abstract type AbstractBasis1D{N} <: AbstractBasis{N} end
 
 """
     LagrangePolynomialBasis{N} <: AbstractBasis1D{N}

@@ -29,3 +29,24 @@ P = IDQ.InterpolatingPolynomial(1, basis)
 
 P = IDQ.InterpolatingPolynomial(1, 2, 2, BigFloat(-1.0), BigFloat(1.0))
 @test eltype(P.basis.basis.funcs.polys[1].coefficients) == BigFloat
+
+P = IDQ.InterpolatingPolynomial(1, 2, 2)
+@test eltype(P.basis.basis.funcs.polys[1].coefficients) == Float64
+
+IDQ.update!(P, repeat([1.0,2.0,3.0],3))
+@test P(0.0,-1.0) ≈ 1.0
+@test P(1.0,0.0) ≈ 2.0
+@test P(-1.0,1.0) ≈ 3.0
+
+IDQ.update!(P, [1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 3.0, 3.0, 3.0])
+@test P(-1.0, 0.0) ≈ 1.0
+@test P(0.0,-1.0) ≈ 2.0
+@test P(1.0,1.0) ≈ 3.0
+
+P = IDQ.InterpolatingPolynomial(2,2,2)
+coeffs = [1.0 1.0 1.0 2.0 2.0 2.0 3.0 3.0 3.0
+          5.0 5.0 5.0 7.0 7.0 7.0 9.0 9.0 9.0]
+IDQ.update!(P, coeffs)
+@test P(-1.0,0.0) ≈ [1.0,5.0]
+@test P(0.0,-1.0) ≈ [2.0,7.0]
+@test P(1.0,1.0) ≈ [3.0,9.0]

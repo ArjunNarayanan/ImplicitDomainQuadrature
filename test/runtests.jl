@@ -7,3 +7,7 @@ end
 @safetestset "Test Basis and Tensor Product Basis" begin
     include("test_basis.jl")
 end
+
+@safetestset "Test Interpolating Polynomials" begin
+    include("test_interpolation.jl")
+end
