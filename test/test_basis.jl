@@ -21,6 +21,10 @@ basis = IDQ.LagrangePolynomialBasis(basis_funcs,roots)
 @test basis.funcs.polys[3].coefficients == [0.5,0.5]
 @test all([basis.points[i] == roots[i] for i in 1:length(roots)])
 
+big_basis = IDQ.LagrangePolynomialBasis(2, BigFloat(-1.0), BigFloat(1.0))
+@test typeof(big_basis.funcs.polys[1].coefficients) == Array{BigFloat,1}
+@test typeof(big_basis.points) == SMatrix{1,3,BigFloat,3}
+
 basis2 = IDQ.LagrangePolynomialBasis(2)
 @test basis == basis2
 @test IDQ.LagrangePolynomialBasis(3) != basis
@@ -34,6 +38,9 @@ basis2 = IDQ.LagrangePolynomialBasis(2)
 tp1 = IDQ.TensorProductBasis(2,basis)
 @test typeof(tp1) == IDQ.TensorProductBasis{2,IDQ.LagrangePolynomialBasis{3},9}
 
+big_tp1 = IDQ.TensorProductBasis(2,big_basis)
+@test typeof(big_tp1(0.5,0.2)) == SVector{9,BigFloat}
+
 tp2 = IDQ.TensorProductBasis(2,2)
 @test tp1 == tp2
 tp3 = IDQ.TensorProductBasis(3,basis)
@@ -45,6 +52,7 @@ v3 = @SVector [0.0,0.0,1.0]
 @test basis(-1.0) ≈ v1
 @test basis(0.0) ≈ v2
 @test basis(1.0) ≈ v3
+@test typeof(big_basis(-1.0)) == SVector{3,BigFloat}
 
 d1 = @SMatrix [-1.5;2.0;-0.5]
 d2 = @SMatrix [-0.5;0.0;0.5]
@@ -53,6 +61,7 @@ d3 = @SMatrix [0.5;-2.0;1.5]
 @test IDQ.derivative(basis, -1.0) ≈ d1
 @test IDQ.derivative(basis, 0.0) ≈ d2
 @test IDQ.derivative(basis, 1.0) ≈ d3
+@test typeof(IDQ.derivative(big_basis, -1.0)) == SMatrix{3,1,BigFloat,3}
 
 v,d = IDQ.value_and_derivative(basis, -1.0)
 @test v == v1
@@ -65,6 +74,7 @@ v,d = IDQ.value_and_derivative(basis, 1.0)
 @test d == d3
 
 tp1 = TensorProductBasis(1,basis)
+
 
 @test tp1(-1.0) ≈ v1
 @test tp1(0.0) ≈ v2

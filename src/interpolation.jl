@@ -1,3 +1,11 @@
+function polytype(B::LagrangePolynomialBasis)
+    return eltype(B.funcs.polys[1].coefficients)
+end
+
+function polytype(B::TensorProductBasis)
+    return eltype(B.basis.funcs.polys[1].coefficients)
+end
+
 """
     InterpolatingPolynomial{N,NFuncs,B<:AbstractBasis,T}
 interpolate a VECTOR of `N` with a basis `B` composed of `NFuncs` functions
@@ -11,6 +19,10 @@ mutable struct InterpolatingPolynomial{N,NFuncs,B<:AbstractBasis,T}
     function InterpolatingPolynomial(coeffs::SMatrix{N,NFuncs,T},
         basis::B) where {B<:AbstractBasis{NFuncs}} where {N,NFuncs,T}
 
+        S = polytype(basis)
+        if S != T
+            @warn "Coefficient type and polynomial type are not the same"
+        end
         new{N,NFuncs,B,T}(coeffs,basis)
     end
 end
@@ -22,7 +34,7 @@ initialize an `InterpolatingPolynomial{N,NFuncs,T}` object with coefficients
 `zeros(T,N,NFuncs)`
     InterpolatingPolynomial(N::Int, basis::AbstractBasis)
 initialize an `InterpolatingPolynomial` object with `Float64` coefficients.
-    InterpolatingPolynomial(T::Type{<:Number}, N::Int, dim::Int, order::Int; start = -1.0, stop = 1.0)
+    InterpolatingPolynomial(N::Int, dim::Int, order::Int, start::T, stop::T) where {T<:Real}
 initialize a `dim` dimensional basis of order `order` and pass this to the
 `InterpolatingPolynomial` constructor.
     InterpolatingPolynomial(N::Int, dim::Int, order::Int; start = -1.0, stop = 1.0)
@@ -40,13 +52,13 @@ function InterpolatingPolynomial(N::Int, basis::AbstractBasis)
     return InterpolatingPolynomial(Float64, N, basis)
 end
 
-function InterpolatingPolynomial(T::Type{<:Number}, N::Int, dim::Int, order::Int; start = -1.0, stop = 1.0)
-    basis = TensorProductBasis(dim, order, start = start, stop = stop)
-    return InterpolatingPolynomial(T,N,basis)
+function InterpolatingPolynomial(N::Int, dim::Int, order::Int, start::T, stop::T) where {T<:Real}
+    basis = TensorProductBasis(dim, order, start, stop)
+    return InterpolatingPolynomial(T, N, basis)
 end
 
 function InterpolatingPolynomial(N::Int, dim::Int, order::Int; start = -1.0, stop = 1.0)
-    basis = TensorProductBasis(dim, order, start = start, stop = stop)
+    basis = TensorProductBasis(dim, order, start, stop)
     return InterpolatingPolynomial(N,basis)
 end
 
@@ -82,6 +94,9 @@ return the gradient of `P` along direction `dir` evaluated at `x`.
     gradient(P::InterpolatingPolynomial, x::AbstractVector)
 evaluate the gradient of `P` at the point vector `x`
 """
+function gradient(P::InterpolatingPolynomial{1}, x::Number)
+    return ((P.coeffs)*(gradient(P.basis, x...)))[1]
+end
 function gradient(P::InterpolatingPolynomial, x...)
     return ((P.coeffs)*(gradient(P.basis, x...)))
 end

@@ -4,13 +4,14 @@ import Base: ==
     AbstractBasis{N}
 abstract supertype for a function basis with `N` functions
 """
-abstract type AbstractBasis{N} end
+abstract type AbstractBasis{N,T} end
 
 """
-    AbstractBasis1D{N}
-abstract supertype for a 1D function basis with `N` functions
+    AbstractBasis1D{N,T}
+abstract supertype for a 1D function basis with `N` functions with type `T`
+coefficients
 """
-abstract type AbstractBasis1D{N} <: AbstractBasis{N} end
+abstract type AbstractBasis1D{N,T} <: AbstractBasis{N,T} end
 
 """
     LagrangePolynomialBasis{N} <: AbstractBasis1D{N}
@@ -65,17 +66,24 @@ struct LagrangePolynomialBasis{NFuncs} <: AbstractBasis1D{NFuncs}
 end
 
 """
-    LagrangePolynomialBasis(order::Int; start = -1.0, stop = 1.0)
+    LagrangePolynomialBasis(order::Int, start::T, stop::T) where {T<:Real}
 construct a polynomial basis with variable `x` of order `order` with
 equally spaced points between `start` and `stop`.
+    LagrangePolynomialBasis(order::Int)
+construct a polynomial basis with variable `x` of order `order` with equally
+spaced points of type `T` between `-1.0` and `1.0`
 """
-function LagrangePolynomialBasis(order::Int; start = -1.0, stop = 1.0)
-
+function LagrangePolynomialBasis(order::Int, start::T, stop::T) where {T<:Real}
     DP.@polyvar x
-    NFuncs = order + 1
-    roots = range(start, stop = stop, length = NFuncs)
+    NF = order + 1
+    roots = range(start, stop = stop, length = NF)
     basis = lagrange_polynomials(x,roots)
     return LagrangePolynomialBasis(basis,roots)
+end
+
+function LagrangePolynomialBasis(order::Int)
+
+    return LagrangePolynomialBasis(order, -1.0, 1.0)
 end
 
 """
@@ -143,9 +151,13 @@ construct a `dim` dimensional polynomial basis with variable `x` using a tensor
 product of `order` order `LagrangePolynomialBasis`. The polynomials are
 equispaced from `start` to `stop`.
 """
-function TensorProductBasis(dim::Int, order::Int; start = -1.0, stop = 1.0)
-    basis_1d = LagrangePolynomialBasis(order, start = start, stop = stop)
+function TensorProductBasis(dim::Int, order::Int, start::T, stop::T) where {T<:Real}
+    basis_1d = LagrangePolynomialBasis(order, start, stop)
     return TensorProductBasis(dim, basis_1d)
+end
+
+function TensorProductBasis(dim::Int, order::Int)
+    return TensorProductBasis(dim, order, -1.0, 1.0)
 end
 
 """
@@ -178,6 +190,14 @@ evaluate the derivative of basis `B` at the point `x`
 """
 function derivative(B::LagrangePolynomialBasis, x::Number)
     return SP.jacobian(B.funcs, @SVector [x])
+end
+
+"""
+    gradient(B::LagrangePolynomialBasis, x::Number)
+alias for `derivative(B, x)`
+"""
+function gradient(B::LagrangePolynomialBasis, x::Number)
+    return derivative(B, x)
 end
 
 """
