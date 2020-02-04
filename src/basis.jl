@@ -104,6 +104,8 @@ function ==(b1::LagrangePolynomialBasis{NF},b2::LagrangePolynomialBasis{NF}) whe
     return isequal(b1,b2)
 end
 
+abstract type AbstractTensorProductBasis{D,T,NF} <: AbstractBasis{NF} end
+
 """
     TensorProductBasis{N,NFuncs,T<:AbstractBasis1D} <: AbstractBasis{NFuncs}
 construct an `N` dimensional polynomial basis by tensor product of `T`
@@ -114,22 +116,6 @@ Note that `NFuncs` can be inferred from `T{nfuncs}` as
     - `basis::T` the underlying 1D basis
     - `points::SMatrix{N,NFuncs}` a matrix of point vectors
 """
-# struct TensorProductBasis{N,NFuncs,T<:AbstractBasis1D} <: AbstractBasis{NFuncs}
-#     basis::T
-#     points::SMatrix{N,NFuncs}
-#     function TensorProductBasis(N::Int, B::T) where {T<:AbstractBasis1D{nfuncs}} where {nfuncs}
-#         if (N < 1) || (N > 3)
-#             msg = "Require 1 <= N <= 3, got N = $N"
-#             throw(ArgumentError(msg))
-#         end
-#         NFuncs = nfuncs^N
-#         points = interpolation_points(N,B)
-#         new{N,NFuncs,T}(B,points)
-#     end
-# end
-
-abstract type AbstractTensorProductBasis{D,T,NF} <: AbstractBasis{NF} end
-
 struct TensorProductBasis{D,T,NF} <: AbstractTensorProductBasis{D,T,NF}
     basis::T
     points::SMatrix{D,NF}
