@@ -1,11 +1,3 @@
-function polytype(B::LagrangePolynomialBasis)
-    return eltype(B.funcs.polys[1].coefficients)
-end
-
-function polytype(B::TensorProductBasis)
-    return eltype(B.basis.funcs.polys[1].coefficients)
-end
-
 """
     InterpolatingPolynomial{N,NFuncs,B<:AbstractBasis,T}
 interpolate a VECTOR of `N` with a basis `B` composed of `NFuncs` functions
@@ -19,7 +11,7 @@ mutable struct InterpolatingPolynomial{N,NFuncs,B<:AbstractBasis,T}
     function InterpolatingPolynomial(coeffs::SMatrix{N,NFuncs,T},
         basis::B) where {B<:AbstractBasis{NFuncs}} where {N,NFuncs,T}
 
-        S = polytype(basis)
+        S = coefficient_number_type(basis)
         if S != T
             @warn "Coefficient type and polynomial type are not the same"
         end
