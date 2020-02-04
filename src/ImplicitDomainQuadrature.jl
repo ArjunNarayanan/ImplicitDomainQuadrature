@@ -1,6 +1,8 @@
 module ImplicitDomainQuadrature
 
 using StaticArrays, BranchAndPrune, TaylorModels
+using FastGaussQuadrature
+using Roots, IntervalRootFinding
 using RangeEnclosures
 import DynamicPolynomials
 import StaticPolynomials
