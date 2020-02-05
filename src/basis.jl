@@ -160,6 +160,19 @@ function TensorProductBasis(dim::Int, order::Int)
 end
 
 """
+    coefficient_number_type(B::LagrangePolynomialBasis)
+    coefficient_number_type(B::TensorProductBasis)
+return the type of the coefficient, i.e. `Float64, Float32`
+"""
+function coefficient_number_type(B::LagrangePolynomialBasis)
+    return eltype(B.funcs.polys[1].coefficients)
+end
+
+function coefficient_number_type(B::TensorProductBasis)
+    return eltype(B.basis.funcs.polys[1].coefficients)
+end
+
+"""
     Base.isequal(tp1::TensorProductBasis{D,T,NF}, tp2::TensorProductBasis{D,T,NF}) where {D,T,NF}
 returns `true` if `tp1` and `tp2` have identical `basis` and `points`, `false` otherwise.
 """
@@ -172,7 +185,7 @@ end
 returns `true` if `tp1` and `tp2` have identical `basis` and `points`, `false` otherwise.
 """
 function ==(tp1::TensorProductBasis{D,T,NF}, tp2::TensorProductBasis{D,T,NF}) where {D,T,NF}
-    return tp1.basis == tp2.basis && tp1.points == tp2.points
+    return isequal(tp1,tp2)
 end
 
 """
