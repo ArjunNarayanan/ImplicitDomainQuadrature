@@ -93,6 +93,7 @@ for i in 1:size(tp2.points)[2]
     @test tp2(p) ≈ vals
 end
 
+@test_throws BoundsError gradient(tp2, 3, -1.0, +1.0)
 @test gradient(tp2, 1, -1.0, -1.0) ≈ kron(d1,v1)
 @test gradient(tp2, 1, -1.0, +0.0) ≈ kron(d1,v2)
 @test gradient(tp2, 1, -1.0, +1.0) ≈ kron(d1,v3)
@@ -151,3 +152,11 @@ for i in 1:size(tp3.points)[2]
     @test tp3(p[1],p[2],p[3]) ≈ vals
     @test tp3(p) ≈ vals
 end
+
+@test gradient(tp3, 1, +1.0, -1.0, +0.0) ≈ kron(gradient(basis, +1.0), basis(-1.0), basis(+0.0))
+@test gradient(tp3, 1, +0.0, -1.0, +0.0) ≈ kron(gradient(basis, +0.0), basis(-1.0), basis(+0.0))
+@test gradient(tp3, 1, +1.0, -1.0, +1.0) ≈ kron(gradient(basis, +1.0), basis(-1.0), basis(+1.0))
+
+@test gradient(tp3, 0.3, 0.9, 0.1) ≈ hcat(gradient(tp3, 1, 0.3, 0.9, 0.1), gradient(tp3, 2, 0.3, 0.9, 0.1), gradient(tp3, 3, 0.3, 0.9, 0.1))
+p = [0.15, 0.25, 0.35]
+@test gradient(tp3, p) ≈ hcat(gradient(tp3, 1, p), gradient(tp3, 2, p), gradient(tp3, 3, p))
