@@ -162,13 +162,13 @@ function Base.getindex(quad::QuadratureRule{D}, i::Int) where {D}
 end
 
 """
-    update!(quad::QuadratureRule{D,T}, points::Matrix{T}, weights::Vector{T}) where {D,T}
+    update!(quad::QuadratureRule{D,T}, points::AbstractMatrix{T}, weights::AbstractVector{T}) where {D,T}
 concatenates `points` and `weights` into `quad.points` and `quad.weights` and
 increments `quad.N` appropriately.
-    update!(quad::QuadratureRule{D,T}, point::Vector{T}, weight::T) where {D,T}
+    update!(quad::QuadratureRule{D,T}, point::AbstractVector{T}, weight::T) where {D,T}
 adds a single `point,weight` pair to `quad`
 """
-function update!(quad::QuadratureRule{D,T}, points::Matrix{T}, weights::Vector{T}) where {D,T}
+function update!(quad::QuadratureRule{D,T}, points::AbstractMatrix{T}, weights::AbstractVector{T}) where {D,T}
     dim, npoints = size(points)
     nweights = length(weights)
     checkNumPointsWeights(npoints, nweights)
@@ -181,7 +181,7 @@ function update!(quad::QuadratureRule{D,T}, points::Matrix{T}, weights::Vector{T
     quad.N = size(quad.points)[2]
 end
 
-function update!(quad::QuadratureRule{D,T}, point::Vector{T}, weight::T) where {D,T}
+function update!(quad::QuadratureRule{D,T}, point::AbstractVector{T}, weight::T) where {D,T}
     dim = length(point)
     if dim != D
         msg = "Require $(quad.dim) dimensional points for update, got $dim"

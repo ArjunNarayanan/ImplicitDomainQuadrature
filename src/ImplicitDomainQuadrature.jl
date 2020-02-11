@@ -1,6 +1,6 @@
 module ImplicitDomainQuadrature
 
-using StaticArrays, BranchAndPrune, TaylorModels
+using StaticArrays, BranchAndPrune, TaylorModels, LinearAlgebra
 using FastGaussQuadrature
 using Roots, IntervalRootFinding
 using RangeEnclosures
@@ -16,8 +16,9 @@ include("basis.jl")
 include("interpolation.jl")
 include("bounds.jl")
 include("quadrature_structs.jl")
+include("dimension_reduction.jl")
 
 export TensorProductBasis, InterpolatingPolynomial, update!, interpolation_points,
-       gradient, sign, ==, isequal
+       gradient, sign, ==, isequal, quadrature
 
 end # module
