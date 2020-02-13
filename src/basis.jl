@@ -178,7 +178,7 @@ end
     (B::LagrangePolynomialBasis{NFuncs})(x::T) where {NFuncs,T<:Number}
 evaluate the basis `B` at the point `x`
 """
-function (B::LagrangePolynomialBasis)(x::Number)
+function (B::LagrangePolynomialBasis)(x::T) where {T<:Number}
     return SP.evaluate(B.funcs, @SVector [x])
  end
 
@@ -186,7 +186,7 @@ function (B::LagrangePolynomialBasis)(x::Number)
     derivative(B::LagrangePolynomialBasis, x::Number)
 evaluate the derivative of basis `B` at the point `x`
 """
-function derivative(B::LagrangePolynomialBasis, x::Number)
+function derivative(B::LagrangePolynomialBasis, x::T) where {T<:Number}
     return SP.jacobian(B.funcs, @SVector [x])
 end
 
@@ -194,7 +194,7 @@ end
     gradient(B::LagrangePolynomialBasis, x::Number)
 alias for `derivative(B, x)`
 """
-function gradient(B::LagrangePolynomialBasis, x::Number)
+function gradient(B::LagrangePolynomialBasis, x::T) where {T<:Number}
     return derivative(B, x)
 end
 
@@ -203,7 +203,7 @@ end
 return `(v,d)` where `v` is a vector of the polynomial basis values and `d` is
 a vector of the derivative values of the polynomial basis at the point `x`.
 """
-function value_and_derivative(B::LagrangePolynomialBasis, x::Number)
+function value_and_derivative(B::LagrangePolynomialBasis, x::T) where {T<:Number}
     return SP.evaluate_and_jacobian(B.funcs, @SVector [x])
 end
 
@@ -211,7 +211,7 @@ end
     (B::TensorProductBasis{1})(x::Number)
 evaluate a 1-D tensor product basis at the point `x`
 """
-function (B::TensorProductBasis{1})(x::Number)
+function (B::TensorProductBasis{1})(x::T) where {T<:Number}
     return B.basis(x)
 end
 
@@ -219,7 +219,7 @@ end
     gradient(B::TensorProductBasis{1}, x::Number)
 evaluate the derivative of the 1-D tensor product basis at `x`
 """
-function gradient(B::TensorProductBasis{1}, x::Number)
+function gradient(B::TensorProductBasis{1}, x::T) where {T<:Number}
     return derivative(B.basis, x)
 end
 
@@ -227,7 +227,7 @@ end
  (B::TensorProductBasis{2})(x::Number,y::Number)
 evaluate a 2-D tensor product basis at the point `(x,y)`
 """
-function (B::TensorProductBasis{2})(x::Number,y::Number)
+function (B::TensorProductBasis{2})(x::T,y::T) where {T<:Number}
     return kron(B.basis(x), B.basis(y))
 end
 
@@ -235,7 +235,7 @@ end
     gradient(B::TensorProductBasis{2}, dir::Int, x::Number, y::Number)
 return the gradient of `B` at the point `x` along direction `dir`
 """
-function gradient(B::TensorProductBasis{2}, dir::Int, x::Number, y::Number)
+function gradient(B::TensorProductBasis{2}, dir::Int, x::T, y::T) where {T<:Number}
     if dir == 1
         dNx = derivative(B.basis, x)
         Ny = B.basis(y)
@@ -254,7 +254,7 @@ end
 returns an `(N,2)` matrix, where row `I` is the (2D) gradient vector of the `I`th basis
 function. Here `N` is the total number of basis functions.
 """
-function gradient(B::TensorProductBasis{2}, x::Number, y::Number)
+function gradient(B::TensorProductBasis{2}, x::T, y::T) where {T<:Number}
     col1 = gradient(B,1,x,y)
     col2 = gradient(B,2,x,y)
     return hcat(col1,col2)
@@ -264,7 +264,7 @@ end
  (B::TensorProductBasis{3})(x::Number,y::Number,z::Number)
 evaluate a 3-D tensor product basis at the point `(x,y,z)`
 """
-function (B::TensorProductBasis{3})(x::Number,y::Number,z::Number)
+function (B::TensorProductBasis{3})(x::T,y::T,z::T) where {T<:Number}
     return kron(B.basis(x), B.basis(y), B.basis(z))
 end
 
@@ -272,7 +272,7 @@ end
     gradient(B::TensorProductBasis{3}, dir::Int, x::Number, y::Number, z::Number)
 evaluate the gradient of `B` at `(x,y,z)` along direction `dir`.
 """
-function gradient(B::TensorProductBasis{3}, dir::Int, x::Number, y::Number, z::Number)
+function gradient(B::TensorProductBasis{3}, dir::Int, x::T, y::T, z::T) where {T<:Number}
     if dir == 1
         dNx = derivative(B.basis, x)
         Ny = B.basis(y)
@@ -298,7 +298,7 @@ end
 returns an `(N,3)` matrix, where row `I` is the (2D) gradient vector of the `I`th basis
 function. Here `N` is the total number of basis functions.
 """
-function gradient(B::TensorProductBasis{3}, x::Number, y::Number, z::Number)
+function gradient(B::TensorProductBasis{3}, x::T, y::T, z::T) where {T<:Number}
     Nx = B.basis(x)
     Ny = B.basis(y)
     Nz = B.basis(z)
