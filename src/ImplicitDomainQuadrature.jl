@@ -19,6 +19,6 @@ include("quadrature_structs.jl")
 include("dimension_reduction.jl")
 
 export TensorProductBasis, InterpolatingPolynomial, update!, interpolation_points,
-       gradient, sign, ==, isequal, quadrature
+       gradient, sign, ==, isequal, quadrature, QuadratureRule
 
 end # module
