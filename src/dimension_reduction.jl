@@ -243,10 +243,10 @@ end
     isSuitable(height_dir::Int, F::AbstractVector, box::IntervalBox)
 checks if the given `height_dir` is a suitable height direction for each `f` in `F` in the domain specified by `box`
 """
-function isSuitable(height_dir::Int, P::InterpolatingPolynomial, box::IntervalBox)
+function isSuitable(height_dir::Int, P::InterpolatingPolynomial, box::IntervalBox;order::Int = 5, tol::Float64 = 1e-3)
     flag = true
     gradFk(x...) = gradient(P,height_dir,x...)
-    s = sign(gradFk,box)
+    s = sign(gradFk,box,order,tol)
     if s == 0
         flag = false
     end
