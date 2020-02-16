@@ -146,3 +146,10 @@ box = IntervalBox(0.6..0.7,2)
 max_coeff, min_coeff = IDQ.extremal_coeffs_in_box(P,box)
 @test max_coeff == -Inf
 @test min_coeff == Inf
+
+P = InterpolatingPolynomial(1,2,3)
+coeffs = (1:16) .- 5.5
+IDQ.update!(P,coeffs)
+box = IntervalBox(-1..1,2)
+s = sign(P,box)
+@test s == 0

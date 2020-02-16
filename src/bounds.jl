@@ -156,7 +156,7 @@ end
     Base.sign(P::InterpolatingPolynomial{1}, int::IntervalBox; algorithm = :TaylorModels, tol = 1e-3, order = 5)
 special function for an interpolating polynomial type.
 """
-function Base.sign(P::InterpolatingPolynomial{1}, int::IntervalBox; tol::Float64 = 1e-3, order::Int = 5)
+function Base.sign(P::InterpolatingPolynomial{1,NF,B,T}, int::IntervalBox; tol::Float64 = 1e-3, order::Int = 5) where {B<:TensorProductBasis{D,S,N}} where {S<:LagrangePolynomialBasis} where {NF,T,D,N}
 
     max_coeff, min_coeff = extremal_coeffs_in_box(P,int)
     if !isinf(max_coeff) && !isinf(min_coeff) && max_coeff > 0 && min_coeff < 0
