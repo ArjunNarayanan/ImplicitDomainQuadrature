@@ -3,7 +3,7 @@ module ImplicitDomainQuadrature
 using StaticArrays, BranchAndPrune, TaylorModels, LinearAlgebra
 using FastGaussQuadrature
 using Roots, IntervalRootFinding
-using RangeEnclosures
+# using RangeEnclosures
 import DynamicPolynomials
 import StaticPolynomials
 

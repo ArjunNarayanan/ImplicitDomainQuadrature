@@ -37,35 +37,35 @@ end
     Base.muladd(tm::TaylorModelN, a::Number, b::Number)
 overloading `muladd` to avoid an error
 """
-function Base.muladd(tm::TaylorModelN, a::Number, b::Number)
+function Base.muladd(tm::TaylorModelN, a::T, b::T) where {T<:Number}
     return a*tm+b
 end
 
-function Base.muladd(a::Number, tm::TaylorModelN, b::Number)
+function Base.muladd(a::T, tm::TaylorModelN, b::T) where {T<:Number}
     return a*tm+b
 end
 
-function Base.muladd(a::TaylorModelN, tm::TaylorModelN, b::Number)
+function Base.muladd(a::TaylorModelN, tm::TaylorModelN, b::T) where {T<:Number}
     return a*tm+b
 end
 
 @inline zeroBox(N) = IntervalBox(0..0, N)
 @inline symBox(N) = IntervalBox(-1..1, N)
 
-function taylorN(order, box::IntervalBox{N}) where {N}
+function normalizedTaylorN(order, box::IntervalBox{N}) where {N}
     zBoxN = zeroBox(N)
     sBoxN = symBox(N)
-    x0 = IntervalBox(mid(box))
+    x0 = mid(box)
 
-    x = [TaylorModelN(i, order, x0, box) for i=1:N]
+    x = [TaylorModelN(i, order, IntervalBox(x0), box) for i=1:N]
     xnorm = [normalize_taylor(xi.pol, box - x0, true) for xi in x]
-    return [TaylorModelN(xi_norm, 0..0, zBoxN, sBoxN) for xi_norm in xnorm]
+    return [TaylorModelN(xi_norm, 0..0, zBoxN, sBoxN) for xi_norm in xnorm], sBoxN
 end
 
-function bound(f, order, box)
-    tm = taylorN(order, box)
+function bound(f, box, order)
+    tm, sBoxN = normalizedTaylorN(order, box)
     ftm = f(tm...)
-    return evaluate(ftm, box)
+    return evaluate(ftm, sBoxN)
 end
 
 """
@@ -74,8 +74,7 @@ process the given `interval` to determine the sign of `search.f` in this interva
 """
 function BranchAndPrune.process(search::SignSearch, interval::IntervalBox)
 
-    # f_range = enclose((x...) -> search.f(x...), interval, :TaylorModels, order = search.order)
-    f_range = bound(search.f, search.order, interval)
+    f_range = bound(search.f, interval, search.order)
 
     if (search.found_positive && search.found_negative) || (search.breached_tolerance)
         return :discard, interval

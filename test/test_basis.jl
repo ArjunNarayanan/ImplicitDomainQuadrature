@@ -80,9 +80,11 @@ tp1 = TensorProductBasis(1,basis)
 @test tp1(0.0) ≈ v2
 @test tp1(1.0) ≈ v3
 
-@test IDQ.gradient(tp1, -1.0) ≈ d1
-@test IDQ.gradient(tp1, 0.0) ≈ d2
-@test IDQ.gradient(tp1, 1.0) ≈ d3
+@test gradient(tp1, -1.0) ≈ d1
+@test gradient(tp1, 0.0) ≈ d2
+@test gradient(tp1, 1.0) ≈ d3
+@test gradient(tp1, [1.0]) ≈ d3
+@test gradient(tp1, 1, [1.0]) ≈ d3
 
 tp2 = TensorProductBasis(2,basis)
 for i in 1:size(tp2.points)[2]
@@ -156,7 +158,7 @@ end
 @test gradient(tp3, 1, +1.0, -1.0, +0.0) ≈ kron(gradient(basis, +1.0), basis(-1.0), basis(+0.0))
 @test gradient(tp3, 1, +0.0, -1.0, +0.0) ≈ kron(gradient(basis, +0.0), basis(-1.0), basis(+0.0))
 @test gradient(tp3, 1, +1.0, -1.0, +1.0) ≈ kron(gradient(basis, +1.0), basis(-1.0), basis(+1.0))
-
+@test_throws BoundsError gradient(tp3, 4, +1.0, -1.0, +0.0)
 @test gradient(tp3, 0.3, 0.9, 0.1) ≈ hcat(gradient(tp3, 1, 0.3, 0.9, 0.1), gradient(tp3, 2, 0.3, 0.9, 0.1), gradient(tp3, 3, 0.3, 0.9, 0.1))
 p = [0.15, 0.25, 0.35]
 @test gradient(tp3, p) ≈ hcat(gradient(tp3, 1, p), gradient(tp3, 2, p), gradient(tp3, 3, p))

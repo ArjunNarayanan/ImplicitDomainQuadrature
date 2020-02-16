@@ -11,3 +11,7 @@ end
 @safetestset "Test Interpolating Polynomials" begin
     include("test_interpolation.jl")
 end
+
+@safetestset "Test Function Bounds" begin
+    include("test_bounds.jl")
+end
