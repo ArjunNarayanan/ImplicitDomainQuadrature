@@ -125,7 +125,7 @@ mutable struct QuadratureRule{D,T}
     points::Matrix{T}
     weights::Vector{T}
     N::Int
-    function QuadratureRule(points::Matrix{T}, weights::Vector{T}) where {T<:Real}
+    function QuadratureRule(points::AbstractMatrix{T}, weights::AbstractVector{T}) where {T<:Real}
         dim, npoints = size(points)
         if dim > 3
             msg = "Dimension of points must be 1 <= dim <= 3, got dim = $dim"
@@ -193,7 +193,7 @@ end
 function update!(quad::QuadratureRule{D,T}, point::AbstractVector{T}, weight::T) where {D,T}
     dim = length(point)
     if dim != D
-        msg = "Require $(quad.dim) dimensional points for update, got $dim"
+        msg = "Require $D dimensional points for update, got $dim"
         throw(DimensionMismatch(msg))
     end
     quad.points = hcat(quad.points, point)
@@ -206,7 +206,7 @@ end
 returns a matrix of points representing the "tensor product" (or kroneker product)
 of `p1` and `p2`
 """
-function tensorProductPoints(p1::Matrix, p2::Matrix)
+function tensorProductPoints(p1::AbstractMatrix, p2::AbstractMatrix)
     n1 = size(p1)[2]
     n2 = size(p2)[2]
     return vcat(repeat(p1,inner=(1,n2)), repeat(p2,outer=(1,n1)))
@@ -218,8 +218,8 @@ returns a quadrature rule representing the "tensor product" or "kroneker product
 of `quad1d` that is appropriately transformed into `box`
 """
 function tensorProduct(quad1d::ReferenceQuadratureRule, box::IntervalBox{2})
-    p1, w1 = transform_quadrature(quad1d, box[1])
-    p2, w2 = transform_quadrature(quad1d, box[2])
+    p1, w1 = transform(quad1d, box[1])
+    p2, w2 = transform(quad1d, box[2])
     points = tensorProductPoints(p1, p2)
     weights = kron(w1,w2)
     return QuadratureRule(points,weights)

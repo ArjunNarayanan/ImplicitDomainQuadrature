@@ -145,3 +145,43 @@ update!(quad,more_points,more_weights)
 more_points = Array(reshape(1.0:40.0,4,10))
 more_weights = Array(1.0:10.0)
 @test_throws DimensionMismatch update!(quad,more_points,more_weights)
+more_weights = Array(0.0:11.0)
+@test_throws DimensionMismatch update!(quad,more_points,more_weights)
+
+quad = QuadratureRule(2)
+next_point = [1.0, 2.0, 3.0]
+next_weight = 1.5
+@test_throws DimensionMismatch update!(quad, next_point, next_weight)
+next_point = [1.0,2.0]
+next_weight = 1.5
+update!(quad, next_point, next_weight)
+@test size(quad.points) == (2,1)
+@test length(quad.weights) == 1
+@test quad.points[:,1] ≈ next_point
+@test quad.weights[1] ≈ next_weight
+
+p1 = [1.0 2.0 3.0]
+tp = IDQ.tensorProductPoints(p1,p1)
+@test tp ≈ [1.0 1.0 1.0 2.0 2.0 2.0 3.0 3.0 3.0
+            1.0 2.0 3.0 1.0 2.0 3.0 1.0 2.0 3.0]
+
+function test_tensor_product_2d(quad,p1,p2,w1,w2)
+    flag = true
+    npoints = length(w)
+    count = 1
+    for i in 1:npoints
+        for j in 1:npoints
+            flag = flag && quad.points[1,count] ≈ p1[i]
+            flag = flag && quad.points[2,count] ≈ p2[j]
+            flag = flag && quad.weights[count] ≈ w1[i]*w2[j]
+        end
+    end
+    return flag
+end
+
+quad = IDQ.ReferenceQuadratureRule(3)
+box = IntervalBox(-1..1,0..1)
+p1, w1 = IDQ.transform(quad,box[1])
+p2, w2 = IDQ.transform(quad,box[2])
+tquad = IDQ.tensorProduct(quad, box)
+@test test_tensor_product_2d(tquad,p1,p2,w1,w2)

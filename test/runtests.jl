@@ -15,3 +15,7 @@ end
 @safetestset "Test Function Bounds" begin
     include("test_bounds.jl")
 end
+
+@safetestset "Test Quadrature Structs" begin
+    include("test_quadrature_structs.jl")
+end
