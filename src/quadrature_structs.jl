@@ -144,7 +144,7 @@ function QuadratureRule(T::Type{<:Real}, dim::Int)
 end
 
 function QuadratureRule(dim::Int)
-    QuadratureRule(Float64, Float64, dim)
+    QuadratureRule(Float64, dim)
 end
 
 """
@@ -182,7 +182,7 @@ function update!(quad::QuadratureRule{D,T}, points::AbstractMatrix{T}, weights::
     nweights = length(weights)
     checkNumPointsWeights(npoints, nweights)
     if dim != D
-        msg = "Require $(quad.dim) dimensional points for update, got $dim"
+        msg = "Require $D dimensional points for update, got $dim"
         throw(DimensionMismatch(msg))
     end
     quad.points = hcat(quad.points, points)
