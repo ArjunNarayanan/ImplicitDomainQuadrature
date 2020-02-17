@@ -12,6 +12,7 @@ matrix:
 branches:
   only:
     - master
+    - WriteTests
     - /release-.*/
 notifications:
   - provider: Email

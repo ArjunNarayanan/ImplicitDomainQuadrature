@@ -127,7 +127,7 @@ function Base.sign(f, int::IntervalBox, order::Int, tol::T) where {T<:Real}
     if search.found_positive && search.found_negative
         return 0
     elseif search.breached_tolerance
-        error("Search tolerance not tight enough")
+        throw(ArgumentError("Bisection reduced interval size below tolerance. Reduce tolerance or increase the order of the method"))
     elseif search.found_positive
         return 1
     else

@@ -14,6 +14,7 @@ basis_funcs = IDQ.lagrange_polynomials(x,roots)
 @test_throws ArgumentError IDQ.LagrangePolynomialBasis([basis_funcs[1],basis_funcs[1],basis_funcs[1]],roots)
 @test_throws ArgumentError IDQ.LagrangePolynomialBasis([-y, 0.0, y] + basis_funcs, roots)
 @test_throws ArgumentError IDQ.LagrangePolynomialBasis([1.0-y^2, x^2, y^2 - x^2], roots)
+@test_throws ArgumentError IDQ.LagrangePolynomialBasis([1.0 - x^3, x^2, x^3 - x^2], roots)
 
 basis = IDQ.LagrangePolynomialBasis(basis_funcs,roots)
 @test basis.funcs.polys[1].coefficients == [-0.5,0.5]
@@ -75,10 +76,10 @@ v,d = IDQ.value_and_derivative(basis, 1.0)
 
 tp1 = TensorProductBasis(1,basis)
 
-
 @test tp1(-1.0) ≈ v1
 @test tp1(0.0) ≈ v2
 @test tp1(1.0) ≈ v3
+@test tp1([1.0]) ≈ v3
 
 @test gradient(tp1, -1.0) ≈ d1
 @test gradient(tp1, 0.0) ≈ d2

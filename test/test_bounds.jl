@@ -1,6 +1,5 @@
 using ImplicitDomainQuadrature
 using Test
-using StaticArrays
 using IntervalArithmetic
 using TaylorModels
 using BranchAndPrune
@@ -37,6 +36,7 @@ a = 5.0
 b = 2.0
 @test muladd(tm,a,b) == a*tm + b
 @test muladd(a,tm,b) == a*tm + b
+@test muladd(tm,tm,b) == tm*tm + b
 
 @test IDQ.zeroBox(2) == IntervalBox(0..0,2)
 @test IDQ.symBox(3) == IntervalBox(-1..1,3)
@@ -107,12 +107,22 @@ boxes = data(tree)
 @test search.found_negative == true
 @test search.breached_tolerance == false
 
+box = IntervalBox(-1..1,1)
 @test sign(f, box, 1, 1e-2) == 0
 f(x) = x*(x - 0.1)*(x - 1.0)
 @test sign(f, box, 1, 1e-2) == 0
 
 f(x) = (x - 0.5)*(x+0.5) + 10
+box = IntervalBox(-1..1,1)
 @test sign(f, box, 1, 1e-2) == 1
+
+f(x) = (x - 0.5)*(x+0.5) - 3
+box = IntervalBox(-1..1,1)
+@test sign(f, box, 1, 1e-2) == -1
+
+f(x) = x*(x - 1e-4)
+box = IntervalBox(-1..1,1)
+@test_throws ArgumentError sign(f, box, 1, 1e-2)
 
 box = IntervalBox(2 .. 3,1)
 g(x) = (x - 2.5)*(x - 2.6)*(x - 2.9)
@@ -153,3 +163,10 @@ IDQ.update!(P,coeffs)
 box = IntervalBox(-1..1,2)
 s = sign(P,box)
 @test s == 0
+
+P = InterpolatingPolynomial(1,2,3)
+coeffs = 1.0:16.0
+IDQ.update!(P,coeffs)
+box = IntervalBox(-1..1,2)
+s = sign(P,box)
+@test s == 1

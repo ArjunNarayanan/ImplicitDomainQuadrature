@@ -13,13 +13,22 @@ struct ReferenceQuadratureRule{N,T}
     points::SMatrix{1,N,T}
     weights::SVector{N,T}
     function ReferenceQuadratureRule(points::SMatrix{1,N,T}, weights::SVector{N,T}) where {T<:Real,N}
+        w = sum(weights)
+        if !(w ≈ 2)
+            msg = "Quadrature rule over reference domain [-1,1] must have weights that sum to 2.0, got sum = $w"
+            throw(ArgumentError(msg))
+        end
+        for i in 1:N
+            p = points[i]
+            -1.0 <= points[i] <= 1.0 || throw(DomainError("Quadrature points must be contained within reference domain [-1,1], got $p"))
+        end
         return new{N,T}(points,weights)
     end
 end
 
 function checkNumPointsWeights(NP::Int,NW::Int)
     if NP != NW
-        throw(DimensionMismatch("Number of points and weights should match, got `points,weights = ` $npoints, $nweights"))
+        throw(DimensionMismatch("Number of points and weights should match, got `points,weights = ` $NP, $NW"))
     end
 end
 
