@@ -20,6 +20,10 @@ p = [0.5 1.0 2.0]
 w = [0.5,1.0,0.5]
 @test_throws DomainError IDQ.ReferenceQuadratureRule(p,w)
 
+p = [-0.5,0.0,0.5]
+w = [1.0,1.0,1.0]
+@test_throws ArgumentError IDQ.ReferenceQuadratureRule(p,w)
+
 p = [-0.5 0.0 0.5]
 w = [0.5, 1.0, 0.5]
 quad = IDQ.ReferenceQuadratureRule(p,w)
@@ -55,7 +59,7 @@ pq,wq = quad[3]
 @test wq ≈ w[3]
 
 @test_throws ArgumentError IDQ.quadrature_transformers(2.0,1.0)
-@test_logs (:warn, "Transforming quadrature rule to a null domain")
+@test_logs (:warn, "Transforming quadrature rule to a null domain") IDQ.quadrature_transformers(1.0,1.0)
 a = 1.0; b = 2.0
 scale, middle = IDQ.quadrature_transformers(a,b)
 @test scale ≈ 0.5(b - a)

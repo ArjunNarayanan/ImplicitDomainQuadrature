@@ -282,17 +282,21 @@ function gradient(B::TensorProductBasis{3}, x::T, y::T, z::T) where {T<:Number}
     return hcat(kron(dNx,Ny,Nz), kron(Nx,dNy,Nz), kron(Nx,Ny,dNz))
 end
 
+function check_basis_point_dim(basis_dim,point_dim)
+    if basis_dim != point_dim
+        msg = "Require $basis_dim dimension point to evaluate basis, got dim = $point_dim"
+        throw(DimensionMismatch(msg))
+    end
+end
+
 function (B::TensorProductBasis{N})(x::AbstractVector) where {N}
-    @assert length(x) == N
+    check_basis_point_dim(N,length(x))
     if N == 1
         return B(x[1])
     elseif N == 2
         return B(x[1],x[2])
     elseif N == 3
         return B(x[1],x[2],x[3])
-    # else
-    #     msg = "Evaluation of tensor product basis currently supported for 1 <= dimension <= 3 only"
-    #     throw(ArgumentError(msg))
     end
 end
 
@@ -312,30 +316,24 @@ returns an `(N,2)` matrix, where row `I` is the (2D) gradient vector of the `I`t
 function. Here `N` is the total number of basis functions.
 """
 function gradient(B::TensorProductBasis{N}, dir::Int, x::AbstractVector) where {N}
-    @assert length(x) == N
+    check_basis_point_dim(N,length(x))
     if N == 1
         return gradient(B, x[1])
     elseif N == 2
         return gradient(B, dir, x[1], x[2])
     elseif N == 3
         return gradient(B, dir, x[1], x[2], x[3])
-    # else
-    #     msg = "Evaluation of tensor product basis currently supported for 1 <= dim <= 3, got $N"
-    #     throw(ArgumentError(msg))
     end
 end
 
 function gradient(B::TensorProductBasis{dim}, x::AbstractVector) where {dim}
-    @assert length(x) == dim
+    check_basis_point_dim(dim,length(x))
     if dim == 1
         return gradient(B, x[1])
     elseif dim == 2
         return gradient(B, x[1], x[2])
     elseif dim == 3
         return gradient(B, x[1], x[2], x[3])
-    # else
-    #     msg = "Evaluation of tensor product basis gradient currently supported for 1 <= dim <= 3, got $dim"
-    #     throw(ArgumentError(msg))
     end
 end
 
