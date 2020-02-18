@@ -8,10 +8,12 @@ makedocs(;
     ],
     repo="https://github.com/ArjunNarayanan/ImplicitDomainQuadrature/blob/{commit}{path}#L{line}",
     sitename="ImplicitDomainQuadrature.jl",
-    authors="Arjun Narayanan",
-    assets=String[],
+    authors="Arjun Narayanan"
 )
 
 deploydocs(;
     repo="github.com/ArjunNarayanan/ImplicitDomainQuadrature.git",
+    target="build"
+    deps=nothing,
+    make=nothing
 )
