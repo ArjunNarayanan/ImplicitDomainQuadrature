@@ -13,5 +13,5 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/ArjunNarayanan/ImplicitDomainQuadrature.jl",
+    repo="github.com/ArjunNarayanan/ImplicitDomainQuadrature.git",
 )
