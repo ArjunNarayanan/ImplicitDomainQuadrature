@@ -174,10 +174,10 @@ function ==(tp1::TensorProductBasis{D,T,NF}, tp2::TensorProductBasis{D,T,NF}) wh
     return isequal(tp1,tp2)
 end
 
-"""
-    (B::LagrangePolynomialBasis{NFuncs})(x::T) where {NFuncs,T<:Number}
-evaluate the basis `B` at the point `x`
-"""
+# """
+#     (B::LagrangePolynomialBasis{NFuncs})(x::T) where {NFuncs,T<:Number}
+# evaluate the basis `B` at the point `x`
+# """
 function (B::LagrangePolynomialBasis)(x::T) where {T<:Number}
     return SP.evaluate(B.funcs, @SVector [x])
  end
@@ -239,12 +239,12 @@ function gradient(B::TensorProductBasis{2}, x::T, y::T) where {T<:Number}
     return hcat(col1,col2)
 end
 
-"""
-    (B::TensorProductBasis{3})(x::Number,y::Number,z::Number)
-evaluate a 3-D tensor product basis at the point `(x,y,z)`
-    (B::TensorProductBasis{N})(x::AbstractVector) where {N}
-evaluate a tensor product basis on a vector of points
-"""
+# """
+#     (B::TensorProductBasis{3})(x::Number,y::Number,z::Number)
+# evaluate a 3-D tensor product basis at the point `(x,y,z)`
+#     (B::TensorProductBasis{N})(x::AbstractVector) where {N}
+# evaluate a tensor product basis on a vector of points
+# """
 function (B::TensorProductBasis{3})(x::T,y::T,z::T) where {T<:Number}
     return kron(B.basis(x), B.basis(y), B.basis(z))
 end
