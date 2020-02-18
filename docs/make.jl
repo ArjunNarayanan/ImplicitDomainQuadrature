@@ -6,7 +6,7 @@ makedocs(;
     pages=[
         "Home" => "index.md",
     ],
-    repo="https://github.com/ArjunNarayanan/ImplicitDomainQuadrature.jl/blob/{commit}{path}#L{line}",
+    repo="https://github.com/ArjunNarayanan/ImplicitDomainQuadrature/blob/{commit}{path}#L{line}",
     sitename="ImplicitDomainQuadrature.jl",
     authors="Arjun Narayanan",
     assets=String[],
