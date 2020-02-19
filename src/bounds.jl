@@ -49,6 +49,10 @@ function Base.muladd(a::TaylorModelN, tm::TaylorModelN, b::T) where {T<:Number}
     return a*tm+b
 end
 
+function Base.muladd(a::T, b::TaylorModelN, c::TaylorModelN) where {T<:Number}
+    return a*b + c
+end
+
 @inline zeroBox(N) = IntervalBox(0..0, N)
 @inline symBox(N) = IntervalBox(-1..1, N)
 
