@@ -9,7 +9,7 @@
 """
     polynomial_from_roots(x::DP.PolyVar,roots::AbstractVector{T},skipindex::Int) where {T}
 
-return a `DynamicPolynomial` with variable `x` with zeros at `roots` but skipping the
+Return a `DynamicPolynomial` with variable `x` with zeros at `roots` but skipping the
 `skipindex`th root.
 
 # Examples
@@ -34,7 +34,7 @@ end
 """
     normalization(roots::AbstractVector{T},skipindex::Int) where {T}
 
-return the denominator of the standard Lagrange polynomial formula.
+Return the denominator of the standard Lagrange polynomial formula.
 
 Dividing `f = polynomial_from_roots(x,roots,skipindex)/normalization(roots,skipindex)`
 gives a normalized polynomial which evaluates to `1.0` on the `skipindex`th
@@ -60,7 +60,7 @@ end
 """
     lagrange_polynomial(x::DP.PolyVar,roots::AbstractVector{T},index::Int) where {T}
 
-return the `index`th lagrange polynomial from the vector of `roots` with
+Return the `index`th lagrange polynomial from the vector of `roots` with
 variable `x`.
 
 The polynomial is normalized such that it evaluates to `1.0` on `roots[index]`.
@@ -86,7 +86,7 @@ end
 """
     lagrange_polynomials(x::DP.PolyVar,roots::AbstractVector{T}) where {T}
 
-return a vector of lagrange polynomial bases constructed from the given `roots`.
+Return a vector of lagrange polynomial bases constructed from the given `roots`.
 
 # Examples
 ```julia-repl

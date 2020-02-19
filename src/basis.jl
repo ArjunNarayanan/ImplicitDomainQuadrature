@@ -2,18 +2,21 @@ import Base: ==
 
 """
     AbstractBasis{N}
-abstract supertype for a function basis with `N` functions.
+
+Abstract supertype for a function basis with `N` functions.
 """
 abstract type AbstractBasis{N} end
 
 """
     AbstractBasis1D{N}
-abstract supertype for a univariate function basis with `N` functions.
+
+Abstract supertype for a univariate function basis with `N` functions.
 """
 abstract type AbstractBasis1D{N} <: AbstractBasis{N} end
 
 """
     LagrangePolynomialBasis{N} <: AbstractBasis1D{N}
+
 A basis of `N` Lagrange polynomials where each polynomial function is of order `N - 1`.
 """
 struct LagrangePolynomialBasis{NFuncs} <: AbstractBasis1D{NFuncs}
@@ -63,11 +66,9 @@ end
 
 """
     LagrangePolynomialBasis(order::Int; start::T = -1.0, stop::T = 1.0) where {T<:Real}
-construct a polynomial basis with variable `x` of order `order` with
-equally spaced points between `start` and `stop`.
-    LagrangePolynomialBasis(order::Int)
-construct a polynomial basis with variable `x` of order `order` with equally
-spaced points of type `T` between `-1.0` and `1.0`
+
+Return a `LagrangePolynomialBasis` with specified polynomial `order` centered at equispaced
+points between `start` and `stop`.
 """
 function LagrangePolynomialBasis(order::Int; start::T = -1.0, stop::T = 1.0) where {T<:Real}
     DP.@polyvar x
@@ -79,7 +80,10 @@ end
 
 """
     Base.isequal(b1::LagrangePolynomialBasis{NF},b2::LagrangePolynomialBasis{NF}) where {NF}
-returns true if `b1` and `b2` have the same `funcs` and `points`.
+
+Returns `true` if `b1` and `b2` have the same `funcs` and `points`, `false` otherwise.
+
+Same as `==`.
 """
 function Base.isequal(b1::LagrangePolynomialBasis{NF},b2::LagrangePolynomialBasis{NF}) where {NF}
     flag = true
@@ -90,7 +94,10 @@ end
 
 """
     ==(b1::LagrangePolynomialBasis{NF},b2::LagrangePolynomialBasis{NF}) where {NF}
-returns true if `b1` and `b2` have the same `funcs` and `points`.
+
+Returns `true` if `b1` and `b2` have the same `funcs` and `points`, `false` otherwise.
+
+Same as `isequal`.
 """
 function ==(b1::LagrangePolynomialBasis{NF},b2::LagrangePolynomialBasis{NF}) where {NF}
     return isequal(b1,b2)

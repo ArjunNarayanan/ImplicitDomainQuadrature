@@ -30,7 +30,7 @@ P = IDQ.InterpolatingPolynomial(BigFloat, 1, big_basis)
 P = IDQ.InterpolatingPolynomial(1, basis)
 @test eltype(P.coeffs) == Float64
 
-P = IDQ.InterpolatingPolynomial(1, 2, 2, BigFloat(-1.0), BigFloat(1.0))
+P = IDQ.InterpolatingPolynomial(1, 2, 2, start = BigFloat(-1.0), stop = BigFloat(1.0))
 @test eltype(P.basis.basis.funcs.polys[1].coefficients) == BigFloat
 
 P = IDQ.InterpolatingPolynomial(1, 2, 2)
