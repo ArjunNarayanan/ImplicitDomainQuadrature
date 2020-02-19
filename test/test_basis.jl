@@ -163,3 +163,5 @@ end
 @test gradient(tp3, 0.3, 0.9, 0.1) ≈ hcat(gradient(tp3, 1, 0.3, 0.9, 0.1), gradient(tp3, 2, 0.3, 0.9, 0.1), gradient(tp3, 3, 0.3, 0.9, 0.1))
 p = [0.15, 0.25, 0.35]
 @test gradient(tp3, p) ≈ hcat(gradient(tp3, 1, p), gradient(tp3, 2, p), gradient(tp3, 3, p))
+
+@test_throws DimensionMismatch IDQ.check_basis_point_dim(2,3)

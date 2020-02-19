@@ -65,19 +65,20 @@ end
 
 function extend(x0::AbstractVector, k::Int, x::Number)
     dim = length(x0)
-    if dim == 1 && k == 1
-        return [x, x0[1]]
-    elseif dim == 1 && k == 2
-        return [x0[1], x]
+    if dim == 1
+        return extend(x0[1],k,x)
     else
-        throw(ArgumentError("Current support for dim = 1 and k ∈ {1,2}, got dim = $dim, k = $k"))
+        throw(ArgumentError("Current support for dim = 1, got dim = $dim"))
     end
 end
 
 function extend(x0::AbstractVector, k::Int, x::AbstractMatrix)
     old_dim = length(x0)
     dim, npoints = size(x)
-    @assert dim == 1
+    if dim != 1
+        msg = "Extension can only be performed one dimension at a time, got dim = $dim"
+        throw(ArgumentError(msg))
+    end
 
     old_row = repeat(x0, inner = (1,npoints))
     if old_dim == 1 && k == 1
@@ -99,6 +100,13 @@ function signConditionsSatisfied(funcs,xc,sign_conditions)
     return all(i -> funcs[i](xc)*sign_conditions[i] >= 0.0, 1:length(funcs))
 end
 
+
+function check_num_funcs_conds(nfuncs,nconds)
+    if nfuncs != nconds
+        msg = "Require number of functions same as number of sign conditions, got $nfuncs != $nconds"
+        throw(DimensionMismatch(msg))
+    end
+end
 """
     quadrature(F::Vector, sign_conditions::Vector{Int}, lo::T, hi::T, quad1d::ReferenceQuadratureRule{N,T}) where {N,T}
 return a 1D quadrature rule that can be used to integrate in the domain where
@@ -111,8 +119,10 @@ zero level set of `F` by extending along `height_dir`
     quadrature(F::Vector, sign_conditions::Vector{Int}, height_dir::Int, lo::T, hi::T, x0::AbstractMatrix, w0::AbstractVector, quad1d::ReferenceQuadratureRule{N,T}) where {N,T}
 """
 function quadrature(F::Vector, sign_conditions::Vector{Int}, lo::T, hi::T, quad1d::ReferenceQuadratureRule{N,T}) where {N,T}
+    nfuncs = length(F)
+    nconds = length(sign_conditions)
+    check_num_funcs_conds(nfuncs,nconds)
 
-    @assert length(F) == length(sign_conditions)
     quad = QuadratureRule(T,1)
 
     roots = roots_and_ends(F,lo,hi)
@@ -133,6 +143,7 @@ end
 function quadrature(F::Vector, sign_conditions::Vector{Int}, height_dir::Int, lo::T, hi::T, x0::AbstractVector{T}, w0::T, quad1d::ReferenceQuadratureRule{N,T}) where {N,T}
 
     @assert length(F) == length(sign_conditions)
+
 
     lower_dim = length(x0)
     dim = lower_dim + 1
