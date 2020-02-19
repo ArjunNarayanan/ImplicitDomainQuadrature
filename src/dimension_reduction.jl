@@ -203,13 +203,12 @@ corresponds to Algorithm 3 of Robert Saye's 2015 SIAM paper
 function surface_quadrature(F::InterpolatingPolynomial, height_dir::Int, lo::T, hi::T, x0::AbstractVector{T}, w0::T) where {T}
 
     extended_func(x) = F(extend(x0,height_dir,x))
-    root = lo
-    try
-        root = find_zero(extended_func, (lo, hi), Order1())
-    catch err
-        msg = "Failed to find a root along given height direction. Check if the given function is bounded by its zero level-set along $height_dir from "*string(x0)
-        error(msg)
-    end
+    roots = unique_roots(extended_func, lo, hi)
+
+    num_roots = length(roots)
+    num_roots == 1 || throw(ArgumentError("Expected 1 root in given interval, got $num_roots roots"))
+
+    root = roots[1]
     p = extend(x0,height_dir,root)
     gradF = gradient(F, p)
     jac = norm(gradF)/(abs(gradF[height_dir]))
@@ -245,6 +244,11 @@ function surface_quadrature(F::InterpolatingPolynomial, height_dir::Int, int::In
 end
 
 function height_direction(P::InterpolatingPolynomial, box::IntervalBox)
+    grad = gradient(P, mid(box))
+    if norm(grad) ≈ 0.0
+        msg = "Function has a zero gradient at the center of the given interval."
+        throw(ArgumentError(msg))
+    end
     g = abs.(gradient(P, mid(box)))
     k = LinearIndices(g)[argmax(g)]
     return k
@@ -287,7 +291,7 @@ function quadrature(P::InterpolatingPolynomial{N,NF,B,T}, sign_condition::Int, s
         height_dir = height_direction(P, box)
         flag, gradient_sign = isSuitable(height_dir,P,box)
         if gradient_sign == 0
-            error("Subdivision not implemented yet")
+            throw(MethodError("Subdivision not implemented yet"))
         else
             lower(x) = P(extend(x,height_dir,box[height_dir].lo))
             upper(x) = P(extend(x,height_dir,box[height_dir].hi))

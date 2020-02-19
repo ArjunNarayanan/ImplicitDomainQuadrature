@@ -112,6 +112,18 @@ p,w = IDQ.surface_quadrature(P,1,Interval(-1.0,1.0),x0,w0)
 @test p ≈ [0.0,1.0]
 @test w ≈ w0
 
+f2(x) = 1.5 + x[1]
+P = InterpolatingPolynomial(1,2,2)
+coeffs = [f2(P.basis.points[:,i]) for i in 1:size(P.basis.points)[2]]
+update!(P,coeffs)
+x0 = [1.0]
+w0 = 3.0
+@test_throws ArgumentError IDQ.surface_quadrature(P,1,-1.0,1.0,x0,w0)
+
+f2(x) = x[1]
+P = InterpolatingPolynomial(1,2,2)
+coeffs = [f2(P.basis.points[:,i]) for i in 1:size(P.basis.points)[2]]
+update!(P,coeffs)
 x0 = [-0.5 0.0 0.5]
 w0 = [2.0,3.0,4.0]
 surf_quad = IDQ.surface_quadrature(P,1,-1.0,1.0,x0,w0)
@@ -133,6 +145,13 @@ box = IntervalBox(-1..1,2)
 flag,s = IDQ.isSuitable(2,P,box)
 @test flag == true
 @test s == 1
+
+f2(x) = (x[2] + 0.5)*(x[2] - 0.5)
+P = InterpolatingPolynomial(1,2,2)
+coeffs = [f2(P.basis.points[:,i]) for i in 1:size(P.basis.points)[2]]
+update!(P,coeffs)
+flag,s = IDQ.isSuitable(2,P,box)
+@test flag == false
 
 @test sign(1,1,true,-1) == -1
 @test sign(1,-1,false,-1) == -1
@@ -183,3 +202,19 @@ quad = quadrature(P,+1,true,box,quad1d)
 p = IDQ.extend([0.0], 1, quad1d.points)
 @test p ≈ quad.points
 @test quad1d.weights ≈ quad.weights
+
+f2(x) = (x[2] - 0.5)*(x[2] + 0.75)
+quad1d = IDQ.ReferenceQuadratureRule(5)
+box = IntervalBox(-1..1,2)
+P = InterpolatingPolynomial(1,2,2)
+coeffs = [f2(P.basis.points[:,i]) for i in 1:size(P.basis.points)[2]]
+update!(P,coeffs)
+@test_throws MethodError quadrature(P,+1,true,box,quad1d)
+
+f2(x) = (x[2] - 0.5)*(x[2] + 0.5)
+quad1d = IDQ.ReferenceQuadratureRule(5)
+box = IntervalBox(-1..1,2)
+P = InterpolatingPolynomial(1,2,2)
+coeffs = [f2(P.basis.points[:,i]) for i in 1:size(P.basis.points)[2]]
+update!(P,coeffs)
+@test_throws ArgumentError IDQ.height_direction(P,box)

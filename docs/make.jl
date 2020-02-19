@@ -16,4 +16,5 @@ deploydocs(;
     target="build",
     deps=nothing,
     make=nothing
+    versions = ["stable" => "master"]
 )
