@@ -13,7 +13,7 @@ makedocs(;
 
 deploydocs(;
     repo="github.com/ArjunNarayanan/ImplicitDomainQuadrature.git",
-    target="build"
+    target="build",
     deps=nothing,
     make=nothing
 )
