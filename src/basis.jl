@@ -2,22 +2,19 @@ import Base: ==
 
 """
     AbstractBasis{N}
-abstract supertype for a function basis with `N` functions
+abstract supertype for a function basis with `N` functions.
 """
 abstract type AbstractBasis{N} end
 
 """
     AbstractBasis1D{N}
-abstract supertype for a 1D function basis with `N` functions
+abstract supertype for a univariate function basis with `N` functions.
 """
 abstract type AbstractBasis1D{N} <: AbstractBasis{N} end
 
 """
     LagrangePolynomialBasis{N} <: AbstractBasis1D{N}
-A basis of `N` Lagrange polynomials. The polynomial order is `N - 1`.
-# Fields
-    - `funcs::PolynomialSystem{N,1}` - a system of static polynomials
-    - `points::StaticVector{N}` - a static vector of support points
+A basis of `N` Lagrange polynomials where each polynomial function is of order `N - 1`.
 """
 struct LagrangePolynomialBasis{NFuncs} <: AbstractBasis1D{NFuncs}
     funcs::SP.PolynomialSystem{NFuncs,1}
@@ -65,24 +62,19 @@ struct LagrangePolynomialBasis{NFuncs} <: AbstractBasis1D{NFuncs}
 end
 
 """
-    LagrangePolynomialBasis(order::Int, start::T, stop::T) where {T<:Real}
+    LagrangePolynomialBasis(order::Int; start::T = -1.0, stop::T = 1.0) where {T<:Real}
 construct a polynomial basis with variable `x` of order `order` with
 equally spaced points between `start` and `stop`.
     LagrangePolynomialBasis(order::Int)
 construct a polynomial basis with variable `x` of order `order` with equally
 spaced points of type `T` between `-1.0` and `1.0`
 """
-function LagrangePolynomialBasis(order::Int, start::T, stop::T) where {T<:Real}
+function LagrangePolynomialBasis(order::Int; start::T = -1.0, stop::T = 1.0) where {T<:Real}
     DP.@polyvar x
     NF = order + 1
     roots = range(start, stop = stop, length = NF)
     basis = lagrange_polynomials(x,roots)
     return LagrangePolynomialBasis(basis,roots)
-end
-
-function LagrangePolynomialBasis(order::Int)
-
-    return LagrangePolynomialBasis(order, -1.0, 1.0)
 end
 
 """
@@ -136,13 +128,9 @@ construct a `dim` dimensional polynomial basis with variable `x` using a tensor
 product of `order` order `LagrangePolynomialBasis`. The polynomials are
 equispaced from `start` to `stop`.
 """
-function TensorProductBasis(dim::Int, order::Int, start::T, stop::T) where {T<:Real}
-    basis_1d = LagrangePolynomialBasis(order, start, stop)
+function TensorProductBasis(dim::Int, order::Int; start::T = -1.0, stop::T = 1.0) where {T<:Real}
+    basis_1d = LagrangePolynomialBasis(order, start = start, stop = stop)
     return TensorProductBasis(dim, basis_1d)
-end
-
-function TensorProductBasis(dim::Int, order::Int)
-    return TensorProductBasis(dim, order, -1.0, 1.0)
 end
 
 """

@@ -44,14 +44,9 @@ function InterpolatingPolynomial(N::Int, basis::AbstractBasis)
     return InterpolatingPolynomial(Float64, N, basis)
 end
 
-function InterpolatingPolynomial(N::Int, dim::Int, order::Int, start::T, stop::T) where {T<:Real}
-    basis = TensorProductBasis(dim, order, start, stop)
+function InterpolatingPolynomial(N::Int, dim::Int, order::Int, start::T = -1.0, stop::T = 1.0) where {T<:Real}
+    basis = TensorProductBasis(dim, order, start = start, stop = stop)
     return InterpolatingPolynomial(T, N, basis)
-end
-
-function InterpolatingPolynomial(N::Int, dim::Int, order::Int; start = -1.0, stop = 1.0)
-    basis = TensorProductBasis(dim, order, start, stop)
-    return InterpolatingPolynomial(N,basis)
 end
 
 """

@@ -9,7 +9,7 @@ P = IDQ.InterpolatingPolynomial
 
 basis = IDQ.LagrangePolynomialBasis(2)
 coeffs = @SMatrix [1.0 2.0 -1.0]
-big_basis = IDQ.LagrangePolynomialBasis(2, BigFloat(-1.0), BigFloat(1.0))
+big_basis = IDQ.LagrangePolynomialBasis(2, start = BigFloat(-1.0), stop = BigFloat(1.0))
 @test_logs (:warn, "Coefficient type and polynomial type are not the same") IDQ.InterpolatingPolynomial(coeffs, big_basis)
 
 P = IDQ.InterpolatingPolynomial(coeffs, basis)
@@ -23,7 +23,7 @@ update!(P, [1.0,1.0,1.0])
 @test P(0.5) ≈ 1.0
 @test gradient(P, 0.5) ≈ 0.0
 
-big_basis = IDQ.LagrangePolynomialBasis(2, BigFloat(-1.0), BigFloat(1.0))
+big_basis = IDQ.LagrangePolynomialBasis(2, start = BigFloat(-1.0), stop = BigFloat(1.0))
 P = IDQ.InterpolatingPolynomial(BigFloat, 1, big_basis)
 @test eltype(P.coeffs) == BigFloat
 

@@ -22,7 +22,7 @@ basis = IDQ.LagrangePolynomialBasis(basis_funcs,roots)
 @test basis.funcs.polys[3].coefficients == [0.5,0.5]
 @test all([basis.points[i] == roots[i] for i in 1:length(roots)])
 
-big_basis = IDQ.LagrangePolynomialBasis(2, BigFloat(-1.0), BigFloat(1.0))
+big_basis = IDQ.LagrangePolynomialBasis(2, start = BigFloat(-1.0), stop = BigFloat(1.0))
 @test typeof(big_basis.funcs.polys[1].coefficients) == Array{BigFloat,1}
 @test typeof(big_basis.points) == SMatrix{1,3,BigFloat,3}
 
