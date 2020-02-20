@@ -15,6 +15,5 @@ deploydocs(;
     repo="github.com/ArjunNarayanan/ImplicitDomainQuadrature.git",
     target="build",
     deps=nothing,
-    make=nothing,
-    versions = ["stable" => "master"]
+    make=nothing
 )

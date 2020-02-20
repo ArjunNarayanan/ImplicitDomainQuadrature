@@ -33,30 +33,38 @@ function min_diam(box::IntervalBox)
     return minimum(diam.(box))
 end
 
-"""
-    Base.muladd(tm::TaylorModelN, a::Number, b::Number)
-overloading `muladd` to avoid an error
-"""
-function Base.muladd(tm::TaylorModelN, a::T, b::T) where {T<:Number}
-    return a*tm+b
+function Base.muladd(a::TaylorModelN{N,Interval{T},T}, b::T, c::T) where {N,T<:Real}
+    return a*b + c
 end
 
-function Base.muladd(a::T, tm::TaylorModelN, b::T) where {T<:Number}
-    return a*tm+b
+function Base.muladd(a::T, b::TaylorModelN{N,Interval{T},T}, c::T) where {N,T<:Real}
+    return a*b + c
 end
 
-function Base.muladd(a::TaylorModelN, tm::TaylorModelN, b::T) where {T<:Number}
-    return a*tm+b
+function Base.muladd(a::T, b::T, c::TaylorModelN{N,Interval{T},T}) where {N,T<:Real}
+    return a*b + c
 end
 
-function Base.muladd(a::T, b::TaylorModelN, c::TaylorModelN) where {T<:Number}
+function Base.muladd(a::TaylorModelN{N,Interval{T},T}, b::TaylorModelN{N,Interval{T},T}, c::T) where {N,T<:Real}
+    return a*b + c
+end
+
+function Base.muladd(a::TaylorModelN{N,Interval{T},T}, b::T, c::TaylorModelN{N,Interval{T},T}) where {N,T<:Real}
+    return a*b + c
+end
+
+function Base.muladd(a::T, b::TaylorModelN{N,Interval{T},T}, c::TaylorModelN{N,Interval{T},T}) where {N,T<:Real}
+    return a*b + c
+end
+
+function Base.muladd(a::TaylorModelN{N,Interval{T},T}, b::TaylorModelN{N,Interval{T},T}, c::TaylorModelN{N,Interval{T},T}) where {N,T<:Real}
     return a*b + c
 end
 
 @inline zeroBox(N) = IntervalBox(0..0, N)
 @inline symBox(N) = IntervalBox(-1..1, N)
 
-function normalizedTaylorN(order, box::IntervalBox{N}) where {N}
+function normalizedTaylorN(order::Int, box::IntervalBox{N}) where {N}
     zBoxN = zeroBox(N)
     sBoxN = symBox(N)
     x0 = mid(box)
@@ -66,7 +74,7 @@ function normalizedTaylorN(order, box::IntervalBox{N}) where {N}
     return [TaylorModelN(xi_norm, 0..0, zBoxN, sBoxN) for xi_norm in xnorm], sBoxN
 end
 
-function bound(f, box, order)
+function bound(f, box::IntervalBox, order::Int)
     tm, sBoxN = normalizedTaylorN(order, box)
     ftm = f(tm...)
     return evaluate(ftm, sBoxN)
@@ -109,7 +117,7 @@ end
     run_search(f, interval, algorithm, tol, order)
 run a `BranchAndPrune` search until the sign of `f` in the given interval is determined
 """
-function run_search(f, interval, order, tol)
+function run_search(f, interval::IntervalBox, order::Int, tol::Float64)
 
     search = SignSearch(f, interval, order, tol)
     local endtree = nothing
@@ -126,7 +134,7 @@ return
 - `-1` if `f` is uniformly negative on `int`
 - `0` if `f` has at least one zero crossing in `int` (f assumed continuous)
 """
-function Base.sign(f, int::IntervalBox, order::Int, tol::T) where {T<:Real}
+function Base.sign(f, int::IntervalBox, order::Int, tol::Float64)
     tree, search = run_search(f,int,order,tol)
     if search.found_positive && search.found_negative
         return 0
@@ -160,7 +168,7 @@ end
     Base.sign(P::InterpolatingPolynomial{1}, int::IntervalBox; algorithm = :TaylorModels, tol = 1e-3, order = 5)
 special function for an interpolating polynomial type.
 """
-function Base.sign(P::InterpolatingPolynomial{1,NF,B,T}, int::IntervalBox; tol::Float64 = 1e-2, order::Int = 5) where {B<:TensorProductBasis{D,S,N}} where {S<:LagrangePolynomialBasis} where {NF,T,D,N}
+function Base.sign(P::InterpolatingPolynomial{1,NF,B,T}, int::IntervalBox; tol::Float64 = 1e-2, order::Int = 5) where {B<:TensorProductBasis{D,S}} where {S<:LagrangePolynomialBasis} where {NF,T,D}
 
     max_coeff, min_coeff = extremal_coeffs_in_box(P,int)
     if !isinf(max_coeff) && !isinf(min_coeff) && max_coeff > 0 && min_coeff < 0
