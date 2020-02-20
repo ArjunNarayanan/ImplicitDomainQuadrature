@@ -87,7 +87,7 @@ tp1 = TensorProductBasis(1,basis)
 @test gradient(tp1, [1.0]) ≈ d3
 @test gradient(tp1, 1, [1.0]) ≈ d3
 
-function test_basis_on_points(basis::TensorProductBasis{D,T,N}) where {D,T,N}
+function test_basis_on_points(basis::TensorProductBasis{2,T,N}) where {T,N}
     flag = true
     for i in 1:N
         vals = zeros(N)
@@ -101,13 +101,7 @@ end
 
 tp2 = TensorProductBasis(2,basis)
 @test test_basis_on_points(tp2)
-# for i in 1:size(tp2.points)[2]
-#     vals = zeros(9)
-#     vals[i] = 1.0
-#     p = tp2.points[:,i]
-#     @test tp2(p[1],p[2]) ≈ vals
-#     @test tp2(p) ≈ vals
-# end
+
 
 @test_throws BoundsError gradient(tp2, 3, -1.0, +1.0)
 @test gradient(tp2, 1, -1.0, -1.0) ≈ kron(d1,v1)
@@ -160,14 +154,20 @@ tp2 = TensorProductBasis(2,basis)
 @test gradient(tp2, +1.0, +0.0) ≈ hcat(gradient(tp2, 1, +1.0, +0.0), gradient(tp2, 2, +1.0, +0.0))
 @test gradient(tp2, +1.0, +1.0) ≈ hcat(gradient(tp2, 1, +1.0, +1.0), gradient(tp2, 2, +1.0, +1.0))
 
-tp3 = TensorProductBasis(3,basis)
-for i in 1:size(tp3.points)[2]
-    vals = zeros(27)
-    vals[i] = 1.0
-    p = tp3.points[:,i]
-    @test tp3(p[1],p[2],p[3]) ≈ vals
-    @test tp3(p) ≈ vals
+function test_basis_on_points(basis::TensorProductBasis{3,T,N}) where {T,N}
+    flag = true
+    for i in 1:N
+        vals = zeros(N)
+        vals[i] = 1.0
+        p = basis.points[:,i]
+        flag = flag && basis(p[1],p[2],p[3]) ≈ vals
+        flag = flag && basis(p) ≈ vals
+    end
+    return flag
 end
+
+tp3 = TensorProductBasis(3,basis)
+@test test_basis_on_points(tp3)
 
 @test gradient(tp3, 1, +1.0, -1.0, +0.0) ≈ kron(gradient(basis, +1.0), basis(-1.0), basis(+0.0))
 @test gradient(tp3, 1, +0.0, -1.0, +0.0) ≈ kron(gradient(basis, +0.0), basis(-1.0), basis(+0.0))
