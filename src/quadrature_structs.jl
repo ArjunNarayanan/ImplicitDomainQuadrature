@@ -1,4 +1,11 @@
 """
+    AbstractQuadratureRule{D,T}
+Abstract supertype for all quadrature rules in `D` dimensions with type `T`
+points and weights.
+"""
+abstract type AbstractQuadratureRule{D,T} end
+
+"""
     ReferenceQuadratureRule{N,T}
 a one-dimensional quadrature rule defined on the reference domain `[-1,1]`.
 # Inner Constructors:
@@ -9,7 +16,7 @@ a one-dimensional quadrature rule defined on the reference domain `[-1,1]`.
     ReferenceQuadratureRule(N::Int)
 return an `N` point gauss legendre quadrature rule on `[-1,1]`
 """
-struct ReferenceQuadratureRule{N,T}
+struct ReferenceQuadratureRule{N,T} <: AbstractQuadratureRule{1,T}
     points::SMatrix{1,N,T}
     weights::SVector{N,T}
     function ReferenceQuadratureRule(points::SMatrix{1,N,T}, weights::SVector{N,T}) where {T<:Real,N}
@@ -20,7 +27,7 @@ struct ReferenceQuadratureRule{N,T}
         end
         for i in 1:N
             p = points[i]
-            -1.0 <= points[i] <= 1.0 || throw(DomainError("Quadrature points must be contained within reference domain [-1,1], got $p"))
+            -1.0 <= p <= 1.0 || throw(DomainError("Quadrature points must be contained within reference domain [-1,1], got $p"))
         end
         return new{N,T}(points,weights)
     end
@@ -28,7 +35,7 @@ end
 
 function checkNumPointsWeights(NP::Int,NW::Int)
     if NP != NW
-        throw(DimensionMismatch("Number of points and weights should match, got `points,weights = ` $NP, $NW"))
+        throw(DimensionMismatch("Number of points and weights should match, got num. points, num. weights = ` $NP,$NW"))
     end
 end
 
@@ -105,7 +112,7 @@ function transform(quad::ReferenceQuadratureRule{N,T}, lo::T, hi::T) where {N,T}
     return transformed_points, transformed_weights
 end
 
-function transform(quad::ReferenceQuadratureRule, int::Interval)
+function transform(quad::ReferenceQuadratureRule{N,T}, int::Interval{T}) where {N,T}
     return transform(quad, int.lo, int.hi)
 end
 
@@ -121,11 +128,11 @@ initializes `(dim,0)` matrix of points and `(0)` vector of weights. Both are of 
     QuadratureRule(dim::Int)
 initializes `(dim,0)` matrix of points and `(0)` vector of weights of type `Float64`
 """
-mutable struct QuadratureRule{D,T}
+mutable struct QuadratureRule{D,T} <: AbstractQuadratureRule{D,T}
     points::Matrix{T}
     weights::Vector{T}
     N::Int
-    function QuadratureRule(points::AbstractMatrix{T}, weights::AbstractVector{T}) where {T<:Real}
+    function QuadratureRule(points::AbstractMatrix{T}, weights::AbstractVector{T}) where {T<:AbstractFloat}
         dim, npoints = size(points)
         if dim > 3
             msg = "Dimension of points must be 1 <= dim <= 3, got dim = $dim"
@@ -137,7 +144,7 @@ mutable struct QuadratureRule{D,T}
     end
 end
 
-function QuadratureRule(T::Type{<:Real}, dim::Int)
+function QuadratureRule(T::Type{<:AbstractFloat}, dim::Int)
     points = Matrix{T}(undef, dim, 0)
     weights = Vector{T}(undef, 0)
     return QuadratureRule(points, weights)
@@ -187,7 +194,7 @@ function update!(quad::QuadratureRule{D,T}, points::AbstractMatrix{T}, weights::
     end
     quad.points = hcat(quad.points, points)
     append!(quad.weights, weights)
-    quad.N = size(quad.points)[2]
+    quad.N = length(quad.weights)
 end
 
 function update!(quad::QuadratureRule{D,T}, point::AbstractVector{T}, weight::T) where {D,T}
@@ -223,4 +230,37 @@ function tensorProduct(quad1d::ReferenceQuadratureRule, box::IntervalBox{2})
     points = tensorProductPoints(p1, p2)
     weights = kron(w1,w2)
     return QuadratureRule(points,weights)
+end
+
+struct TensorProductQuadratureRule{D,R,N,T} <: AbstractQuadratureRule{D,T}
+    points::SMatrix{D,N,T}
+    weights::SVector{N,T}
+    function TensorProductQuadratureRule(D::Int, quad1d::R) where {R<:ReferenceQuadratureRule{N1,T}} where {N1,T}
+        1 <= D <= 2 || throw(ArgumentError("Expected D ∈ {1,2}, got D = $D"))
+        p = tensorProductPoints(quad1d.points, quad1d.points)
+        w = kron(quad1d.weights, quad1d.weights)
+        N = N1^D
+        points = SMatrix{D,N}(p)
+        weights = SVector{N}(w)
+        new{D,R,N,T}(points,weights)
+    end
+end
+
+function TensorProductQuadratureRule(D::Int, order::Int)
+    order > 0 || throw(ArgumentError("Expected order > 0, got order = $order"))
+    quad1d = ReferenceQuadratureRule(order)
+    return TensorProductQuadratureRule(D,quad1d)
+end
+
+function Base.iterate(quad::TensorProductQuadratureRule{D,R,N}, state=1) where {D,R,N}
+    if state > N
+        return nothing
+    else
+        return ((view(quad.points,1:D,state), quad.weights[state]), state+1)
+    end
+end
+
+function Base.getindex(quad::TensorProductQuadratureRule{D,R,N}, i::Int) where {D,R,N}
+    1 <= i <= N || throw(BoundsError(quad, i))
+    return (view(quad.points,1:D,i), quad.weights[i])
 end
