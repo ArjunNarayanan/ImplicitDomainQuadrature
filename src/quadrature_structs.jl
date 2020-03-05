@@ -73,6 +73,10 @@ function Base.iterate(quad::ReferenceQuadratureRule{N}, state=1) where {N}
     end
 end
 
+function Base.length(quad::ReferenceQuadratureRule{N}) where {N}
+    return N
+end
+
 """
     Base.getindex(quad::ReferenceQuadratureRule{N}, i::Int) where {N}
 return the `i`th point weight pair `p,w`.
@@ -167,6 +171,10 @@ function Base.iterate(quad::QuadratureRule{D}, state=1) where {D}
     end
 end
 
+function Base.length(quad::QuadratureRule)
+    return quad.N
+end
+
 """
     Base.getindex(quad::QuadratureRule{D}, i::Int) where {D}
 return `(p,w)` where `p` is an appropriate view into the `i`th quadrature
@@ -258,6 +266,10 @@ function Base.iterate(quad::TensorProductQuadratureRule{D,R,N}, state=1) where {
     else
         return ((view(quad.points,1:D,state), quad.weights[state]), state+1)
     end
+end
+
+function Base.length(quad::TensorProductQuadratureRule{D,R,N}) where {D,R,N}
+    return N
 end
 
 function Base.getindex(quad::TensorProductQuadratureRule{D,R,N}, i::Int) where {D,R,N}
