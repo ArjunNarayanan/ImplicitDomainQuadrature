@@ -371,3 +371,7 @@ function interpolation_points(N::Int, B::AbstractBasis1D{NF}) where {NF}
         return SMatrix{3,npoints}(points)
     end
 end
+
+function number_of_basis_functions(basis::TensorProductBasis{dim,T,NF}) where {dim,T,NF}
+    return NF
+end
