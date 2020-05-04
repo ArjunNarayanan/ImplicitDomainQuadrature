@@ -237,12 +237,16 @@ struct TensorProductQuadratureRule{D,R,N,T} <: AbstractQuadratureRule{D,T}
     weights::SVector{N,T}
     function TensorProductQuadratureRule(D::Int, quad1d::R) where {R<:ReferenceQuadratureRule{N1,T}} where {N1,T}
         1 <= D <= 2 || throw(ArgumentError("Expected D ∈ {1,2}, got D = $D"))
-        p = tensorProductPoints(quad1d.points, quad1d.points)
-        w = kron(quad1d.weights, quad1d.weights)
-        N = N1^D
-        points = SMatrix{D,N}(p)
-        weights = SVector{N}(w)
-        new{D,R,N,T}(points,weights)
+        if D == 2
+            p = tensorProductPoints(quad1d.points, quad1d.points)
+            w = kron(quad1d.weights, quad1d.weights)
+            N = N1^D
+            points = SMatrix{2,N}(p)
+            weights = SVector{N}(w)
+            new{D,R,N,T}(points,weights)
+        elseif D == 1
+            new{D,T,N1,T}(quad1d.points,quad1d.weights)
+        end
     end
 end
 
