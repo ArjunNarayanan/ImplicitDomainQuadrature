@@ -55,14 +55,14 @@ v3 = @SVector [0.0,0.0,1.0]
 @test basis(1.0) ≈ v3
 @test typeof(big_basis(-1.0)) == SVector{3,BigFloat}
 
-d1 = @SMatrix [-1.5;2.0;-0.5]
-d2 = @SMatrix [-0.5;0.0;0.5]
-d3 = @SMatrix [0.5;-2.0;1.5]
+d1 = @SVector [-1.5,2.0,-0.5]
+d2 = @SVector [-0.5,0.0,0.5]
+d3 = @SVector [0.5,-2.0,1.5]
 
 @test IDQ.derivative(basis, -1.0) ≈ d1
 @test IDQ.derivative(basis, 0.0) ≈ d2
 @test IDQ.derivative(basis, 1.0) ≈ d3
-@test typeof(IDQ.derivative(big_basis, -1.0)) == SMatrix{3,1,BigFloat,3}
+@test typeof(IDQ.derivative(big_basis, -1.0)) == SVector{3,BigFloat}
 
 v,d = IDQ.value_and_derivative(basis, -1.0)
 @test v == v1
