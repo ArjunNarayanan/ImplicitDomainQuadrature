@@ -184,11 +184,7 @@ evaluate the derivative of basis `B` at the point `x`
 function derivative(B::LagrangePolynomialBasis{N}, x::T) where {T<:Number,N}
     vals = SP.jacobian(B.funcs,@SVector [x])
     return SVector{N}(vals)
-    # return SP.jacobian(B.funcs, @SVector [x])
 end
-# function derivative(B::LagrangePolynomialBasis, x::T) where {T<:Number}
-    # return SP.jacobian(B.funcs, @SVector [x])
-# end
 
 """
     gradient(B::LagrangePolynomialBasis, x::Number)
@@ -206,7 +202,6 @@ a vector of the derivative values of the polynomial basis at the point `x`.
 function value_and_derivative(B::LagrangePolynomialBasis{N}, x::T) where {T<:Number,N}
     v,d = SP.evaluate_and_jacobian(B.funcs, @SVector [x])
     return v,SVector{N}(d)
-    # return SP.evaluate_and_jacobian(B.funcs, @SVector [x])
 end
 
 function (B::TensorProductBasis{1})(x::T) where {T<:Number}
