@@ -33,6 +33,10 @@ struct ReferenceQuadratureRule{N,T} <: AbstractQuadratureRule{1,T}
     end
 end
 
+function get_reference_element_size(::Type{<:ReferenceQuadratureRule})
+    return 2.0
+end
+
 function checkNumPointsWeights(NP::Int,NW::Int)
     if NP != NW
         throw(DimensionMismatch("Number of points and weights should match, got num. points, num. weights = ` $NP,$NW"))

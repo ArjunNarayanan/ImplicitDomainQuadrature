@@ -20,6 +20,6 @@ include("dimension_reduction.jl")
 export TensorProductBasis, InterpolatingPolynomial, update!,
        interpolation_points, gradient, sign, ==, isequal, quadrature,
        QuadratureRule, TensorProductQuadratureRule, ReferenceQuadratureRule,
-       number_of_basis_functions
+       number_of_basis_functions, get_reference_element_size
 
 end # module
