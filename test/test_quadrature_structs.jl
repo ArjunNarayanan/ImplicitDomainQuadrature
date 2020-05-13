@@ -213,3 +213,16 @@ p,w = quad[3]
 
 @test test_tensor_product_2d(quad,quad1d.points,
     quad1d.points,quad1d.weights,quad1d.weights)
+
+quad1d = ReferenceQuadratureRule(2)
+@test_throws ArgumentError TensorProductQuadratureRule(1,0)
+quad = TensorProductQuadratureRule(1,2)
+@test typeof(quad) == TensorProductQuadratureRule{1,typeof(quad1d),2,Float64}
+@test all(quad.points .== quad1d.points)
+@test all(quad.weights .== quad1d.weights)
+
+quad1d = ReferenceQuadratureRule(4)
+quad = TensorProductQuadratureRule(2,4)
+@test typeof(quad) == TensorProductQuadratureRule{2,typeof(quad1d),16,Float64}
+@test test_tensor_product_2d(quad,quad1d.points,quad1d.points,
+    quad1d.weights,quad1d.weights)

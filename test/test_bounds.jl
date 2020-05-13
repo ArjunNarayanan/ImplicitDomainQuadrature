@@ -37,6 +37,12 @@ b = 2.0
 @test muladd(tm,a,b) == a*tm + b
 @test muladd(a,tm,b) == a*tm + b
 @test muladd(tm,tm,b) == tm*tm + b
+@test muladd(a,b,tm) == a*b+tm
+tm1 = TaylorModelN(1,1,x0,box)
+tm2 = TaylorModelN(1,1,x0,box)
+tm3 = TaylorModelN(1,1,x0,box)
+@test muladd(tm1,a,tm2) == a*tm1 + tm2
+@test muladd(tm1,tm2,tm3) == tm1*tm2 + tm3
 
 @test IDQ.zeroBox(2) == IntervalBox(0..0,2)
 @test IDQ.symBox(3) == IntervalBox(-1..1,3)
