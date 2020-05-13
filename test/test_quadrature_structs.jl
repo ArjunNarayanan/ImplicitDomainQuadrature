@@ -189,3 +189,27 @@ p1, w1 = IDQ.transform(quad,box[1])
 p2, w2 = IDQ.transform(quad,box[2])
 tquad = IDQ.tensorProduct(quad, box)
 @test test_tensor_product_2d(tquad,p1,p2,w1,w2)
+
+
+quad1d = IDQ.ReferenceQuadratureRule(2)
+@test_throws ArgumentError TensorProductQuadratureRule(3,quad1d)
+quad = TensorProductQuadratureRule(1,quad1d)
+@test all(quad.points .== quad1d.points)
+@test all(quad.weights .== quad1d.weights)
+@test typeof(quad) == TensorProductQuadratureRule{1,typeof(quad1d),2,Float64}
+@test typeof(quad) <: IDQ.AbstractQuadratureRule{1,Float64}
+p,w = quad[2]
+@test all(p .== quad1d.points[2])
+@test all(w .== quad1d.weights[2])
+@test test_multidim_iteration(quad,quad1d.points,quad1d.weights)
+
+quad1d = IDQ.ReferenceQuadratureRule(4)
+quad = TensorProductQuadratureRule(2,quad1d)
+@test typeof(quad) == TensorProductQuadratureRule{2,typeof(quad1d),16,Float64}
+@test typeof(quad) <: IDQ.AbstractQuadratureRule{2,Float64}
+p,w = quad[3]
+@test all(p .== [quad1d.points[1],quad1d.points[3]])
+@test w == quad1d.weights[1]*quad1d.weights[3]
+
+@test test_tensor_product_2d(quad,quad1d.points,
+    quad1d.points,quad1d.weights,quad1d.weights)

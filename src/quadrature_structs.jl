@@ -245,7 +245,7 @@ struct TensorProductQuadratureRule{D,R,N,T} <: AbstractQuadratureRule{D,T}
             weights = SVector{N}(w)
             new{D,R,N,T}(points,weights)
         elseif D == 1
-            new{D,T,N1,T}(quad1d.points,quad1d.weights)
+            new{D,R,N1,T}(quad1d.points,quad1d.weights)
         end
     end
 end
