@@ -226,3 +226,10 @@ quad = TensorProductQuadratureRule(2,4)
 @test typeof(quad) == TensorProductQuadratureRule{2,typeof(quad1d),16,Float64}
 @test test_tensor_product_2d(quad,quad1d.points,quad1d.points,
     quad1d.weights,quad1d.weights)
+
+
+quad = TensorProductQuadratureRule(2,4)
+@test length(quad) == 16
+
+quad = TensorProductQuadratureRule(1,5)
+@test length(quad) == 5

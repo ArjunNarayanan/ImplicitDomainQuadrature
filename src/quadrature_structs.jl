@@ -268,3 +268,7 @@ function Base.getindex(quad::TensorProductQuadratureRule{D,R,N}, i::Int) where {
     1 <= i <= N || throw(BoundsError(quad, i))
     return (view(quad.points,1:D,i), quad.weights[i])
 end
+
+function Base.length(quad::TensorProductQuadratureRule{dim,T,NP}) where {dim,T,NP}
+    return NP
+end
