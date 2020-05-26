@@ -1,8 +1,10 @@
-using ImplicitDomainQuadrature
 using Test
+using PolynomialBasis
 using IntervalArithmetic
 using TaylorModels
 using BranchAndPrune
+using Revise
+using ImplicitDomainQuadrature
 
 IDQ = ImplicitDomainQuadrature
 
@@ -149,7 +151,7 @@ s = [sign(g2,box,i,1e-2) for i in orders]
 
 P = InterpolatingPolynomial(1,2,2)
 coeffs = 1:9
-IDQ.update!(P,coeffs)
+PolynomialBasis.update!(P,coeffs)
 box = IntervalBox(-1..1,2)
 max_coeff, min_coeff = IDQ.extremal_coeffs_in_box(P,box)
 @test max_coeff ≈ 9.0
@@ -165,14 +167,14 @@ max_coeff, min_coeff = IDQ.extremal_coeffs_in_box(P,box)
 
 P = InterpolatingPolynomial(1,2,3)
 coeffs = (1:16) .- 5.5
-IDQ.update!(P,coeffs)
+PolynomialBasis.update!(P,coeffs)
 box = IntervalBox(-1..1,2)
 s = sign(P,box)
 @test s == 0
 
 P = InterpolatingPolynomial(1,2,3)
 coeffs = 1.0:16.0
-IDQ.update!(P,coeffs)
+PolynomialBasis.update!(P,coeffs)
 box = IntervalBox(-1..1,2)
 s = sign(P,box)
 @test s == 1

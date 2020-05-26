@@ -1,16 +1,16 @@
 using SafeTestsets
 
-@safetestset "Test Lagrange Polynomial construction" begin
-    include("test_lagrange_polynomials.jl")
-end
-
-@safetestset "Test Basis and Tensor Product Basis" begin
-    include("test_basis.jl")
-end
-
-@safetestset "Test Interpolating Polynomials" begin
-    include("test_interpolation.jl")
-end
+# @safetestset "Test Lagrange Polynomial construction" begin
+#     include("test_lagrange_polynomials.jl")
+# end
+#
+# @safetestset "Test Basis and Tensor Product Basis" begin
+#     include("test_basis.jl")
+# end
+#
+# @safetestset "Test Interpolating Polynomials" begin
+#     include("test_interpolation.jl")
+# end
 
 @safetestset "Test Function Bounds" begin
     include("test_bounds.jl")

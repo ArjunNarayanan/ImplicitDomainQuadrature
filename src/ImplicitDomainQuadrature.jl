@@ -1,5 +1,6 @@
 module ImplicitDomainQuadrature
 
+using PolynomialBasis
 using StaticArrays, BranchAndPrune, TaylorModels, LinearAlgebra
 using FastGaussQuadrature
 using Roots, IntervalRootFinding
@@ -10,15 +11,13 @@ import StaticPolynomials
 DP = DynamicPolynomials
 SP = StaticPolynomials
 
-include("lagrange_polynomials.jl")
-include("basis.jl")
-include("interpolation.jl")
+# include("lagrange_polynomials.jl")
+# include("basis.jl")
+# include("interpolation.jl")
 include("bounds.jl")
 include("quadrature_structs.jl")
 include("dimension_reduction.jl")
 
-export AbstractBasis, TensorProductBasis, InterpolatingPolynomial, update!,
-       interpolation_points, gradient, sign, ==, isequal, quadrature,
-       QuadratureRule, TensorProductQuadratureRule, ReferenceQuadratureRule
+export sign, quadrature, QuadratureRule, TensorProductQuadratureRule
 
 end # module
