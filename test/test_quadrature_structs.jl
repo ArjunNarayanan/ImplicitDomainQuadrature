@@ -1,10 +1,15 @@
-using ImplicitDomainQuadrature
 using Test
 using StaticArrays
 using FastGaussQuadrature
 using IntervalArithmetic
+using Revise
+using ImplicitDomainQuadrature
 
 IDQ = ImplicitDomainQuadrature
+
+function allequal(v1,v2)
+    return all(v1 .≈ v2)
+end
 
 @test_throws DimensionMismatch IDQ.checkNumPointsWeights(2,3)
 
@@ -27,19 +32,19 @@ w = [1.0,1.0,1.0]
 p = [-0.5 0.0 0.5]
 w = [0.5, 1.0, 0.5]
 quad = IDQ.ReferenceQuadratureRule(p,w)
-@test quad.points ≈ p
-@test quad.weights ≈ w
+@test allequal(quad.points,p)
+@test allequal(quad.weights,w)
 
 p = [-0.5, 0.0, 0.5]
 w = [0.5, 1.0, 0.5]
 quad = IDQ.ReferenceQuadratureRule(p,w)
-@test quad.points ≈ p'
-@test quad.weights ≈ w
+@test allequal(quad.points,p')
+@test allequal(quad.weights,w)
 
 quad = IDQ.ReferenceQuadratureRule(5)
 p,w = gausslegendre(5)
-@test quad.points ≈ p'
-@test quad.weights ≈ w
+@test allequal(quad.points,p')
+@test allequal(quad.weights,w)
 
 function test_iteration(quad,points,weights)
     flag = true

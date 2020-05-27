@@ -3,7 +3,7 @@ using PolynomialBasis
 using IntervalArithmetic
 using TaylorModels
 using BranchAndPrune
-using Revise
+# using Revise
 using ImplicitDomainQuadrature
 
 IDQ = ImplicitDomainQuadrature

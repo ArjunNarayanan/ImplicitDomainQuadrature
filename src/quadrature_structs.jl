@@ -39,7 +39,7 @@ function checkNumPointsWeights(NP::Int,NW::Int)
     end
 end
 
-function ReferenceQuadratureRule(points::AbstractMatrix, weights::AbstractVector)
+function ReferenceQuadratureRule(points::M, weights::V) where {M<:AbstractMatrix} where {V<:AbstractVector}
     dim,npoints = size(points)
     nweights = length(weights)
     if dim > 1
@@ -49,7 +49,7 @@ function ReferenceQuadratureRule(points::AbstractMatrix, weights::AbstractVector
     return ReferenceQuadratureRule(SMatrix{1,npoints}(points), SVector{npoints}(weights))
 end
 
-function ReferenceQuadratureRule(points::AbstractVector, weights::AbstractVector)
+function ReferenceQuadratureRule(points::V,weights::V) where {V<:AbstractVector}
     npoints = length(points)
     nweights = length(weights)
     checkNumPointsWeights(npoints,nweights)
@@ -105,14 +105,14 @@ transform `quad` from the interval `[-1,1]` to the interval `[a,b]`
     transform(quad::ReferenceQuadratureRule, int::Interval)
 transform `quad` from the interval `[-1,1]` to `int`
 """
-function transform(quad::ReferenceQuadratureRule{N,T}, lo::T, hi::T) where {N,T}
+function transform(quad::ReferenceQuadratureRule, lo::T, hi::T) where {T<:Real}
     scale, mid = quadrature_transformers(lo, hi)
     transformed_points = scale*quad.points .+ mid
     transformed_weights = scale*quad.weights
     return transformed_points, transformed_weights
 end
 
-function transform(quad::ReferenceQuadratureRule{N,T}, int::Interval{T}) where {N,T}
+function transform(quad::ReferenceQuadratureRule, int::Interval)
     return transform(quad, int.lo, int.hi)
 end
 
