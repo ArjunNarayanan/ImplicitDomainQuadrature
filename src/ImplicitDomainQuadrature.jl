@@ -17,6 +17,7 @@ using Roots, IntervalRootFinding
 include("bounds.jl")
 include("new_quadrature_structs.jl")
 # include("quadrature_structs.jl")
+include("new_dimension_reduction.jl")
 # include("dimension_reduction.jl")
 
 # export sign, quadrature, QuadratureRule, TensorProductQuadratureRule
