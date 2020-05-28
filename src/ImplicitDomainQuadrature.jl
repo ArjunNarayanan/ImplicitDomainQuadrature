@@ -1,9 +1,13 @@
 module ImplicitDomainQuadrature
 
 using PolynomialBasis
-using StaticArrays, BranchAndPrune, TaylorModels, LinearAlgebra
+using StaticArrays
+using BranchAndPrune
+using TaylorModels
+using LinearAlgebra
 using FastGaussQuadrature
-using Roots, IntervalRootFinding
+using Roots
+using IntervalRootFinding
 
 
 include("bounds.jl")
