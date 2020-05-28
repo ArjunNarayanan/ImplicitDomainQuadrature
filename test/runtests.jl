@@ -20,6 +20,6 @@ end
     include("test_new_quadrature_structs.jl")
 end
 
-# @safetestset "Test Dimension Reduction Algorithm" begin
-#     include("test_dimension_reduction.jl")
-# end
+@safetestset "Test Dimension Reduction Algorithm" begin
+    include("test_new_dimension_reduction.jl")
+end

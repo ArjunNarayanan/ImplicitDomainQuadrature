@@ -134,7 +134,7 @@ return
 - `-1` if `f` is uniformly negative on `int`
 - `0` if `f` has at least one zero crossing in `int` (f assumed continuous)
 """
-function Base.sign(f, int::IntervalBox,order,tol)
+function Base.sign(f,int::IntervalBox,order,tol)
     tree, search = run_search(f,int,order,tol)
     if search.found_positive && search.found_negative
         return 0
