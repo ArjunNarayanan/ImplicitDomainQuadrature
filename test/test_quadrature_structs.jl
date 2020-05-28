@@ -2,7 +2,7 @@ using Test
 using StaticArrays
 using FastGaussQuadrature
 using IntervalArithmetic
-using Revise
+# using Revise
 using ImplicitDomainQuadrature
 
 IDQ = ImplicitDomainQuadrature
@@ -11,230 +11,165 @@ function allequal(v1,v2)
     return all(v1 .≈ v2)
 end
 
-@test_throws DimensionMismatch IDQ.checkNumPointsWeights(2,3)
+p = SMatrix{1,3}([+1.0 0.0 1.0])
+w = SVector{3}([1/3,2/3,1/3])
+@test_throws AssertionError IDQ.ReferenceQuadratureRule(p,w,-1.0,1.0)
 
-p = [1.0 3.0 5.0
-     2.0 4.0 6.0]
-w = [1.0,2.0,1.0]
-@test_throws ArgumentError IDQ.ReferenceQuadratureRule(p,w)
-p = [1.0,2.0,1.0]
-w = [1.0,2.0,3.0,4.0]
-@test_throws DimensionMismatch IDQ.ReferenceQuadratureRule(p,w)
+p = SMatrix{1,3}([-1.0 0.0 1.0])
+@test_throws AssertionError IDQ.ReferenceQuadratureRule(p,w,1.,1.)
+@test_throws AssertionError IDQ.ReferenceQuadratureRule(p,w,-1.,1.)
 
-p = [0.5 1.0 2.0]
-w = [0.5,1.0,0.5]
-@test_throws DomainError IDQ.ReferenceQuadratureRule(p,w)
-
-p = [-0.5,0.0,0.5]
-w = [1.0,1.0,1.0]
-@test_throws ArgumentError IDQ.ReferenceQuadratureRule(p,w)
-
-p = [-0.5 0.0 0.5]
-w = [0.5, 1.0, 0.5]
-quad = IDQ.ReferenceQuadratureRule(p,w)
+float_type = typeof(1.0)
+w = SVector{3}([0.5,1.0,0.5])
+quad = IDQ.ReferenceQuadratureRule(p,w,-1.,1.)
+@test typeof(quad) == IDQ.ReferenceQuadratureRule{3,float_type}
+@test typeof(quad) <: IDQ.AbstractQuadratureRule{1,3}
 @test allequal(quad.points,p)
 @test allequal(quad.weights,w)
+@test quad.lo ≈ -1.0
+@test quad.hi ≈ +1.0
 
-p = [-0.5, 0.0, 0.5]
-w = [0.5, 1.0, 0.5]
-quad = IDQ.ReferenceQuadratureRule(p,w)
+p = [1.0 0.0 1.0
+     1.0 0.0 1.0]
+w = [0.5,1.0,0.5]
+@test_throws AssertionError IDQ.ReferenceQuadratureRule(p,w,-1.0,1.0)
+p = [-1.0 0.0 1.0 2.0]
+@test_throws AssertionError IDQ.ReferenceQuadratureRule(p,w,-1.0,1.0)
+p = [-1.0 0.0 1.0]
+quad = IDQ.ReferenceQuadratureRule(p,w,-1.0,1.0)
+@test allequal(quad.points,p)
+@test allequal(quad.weights,w)
+@test quad.lo ≈ -1.0
+@test quad.hi ≈ +1.0
+
+p = [0.0,0.5,1.0]
+w = [1/3,1/3,1/3]
+quad = IDQ.ReferenceQuadratureRule(p,w,0.0,1.0)
 @test allequal(quad.points,p')
 @test allequal(quad.weights,w)
+@test quad.lo ≈ 0.0
+@test quad.hi ≈ 1.0
 
-quad = IDQ.ReferenceQuadratureRule(5)
-p,w = gausslegendre(5)
+quad = IDQ.ReferenceQuadratureRule(4)
+p,w = gausslegendre(4)
 @test allequal(quad.points,p')
 @test allequal(quad.weights,w)
+@test quad.lo ≈ -1.0
+@test quad.hi ≈ +1.0
+@test typeof(quad) == IDQ.ReferenceQuadratureRule{4,float_type}
+@test typeof(quad) <: IDQ.AbstractQuadratureRule{1,4}
 
 function test_iteration(quad,points,weights)
-    flag = true
     count = 1
+    flag = true
     for (p,w) in quad
-        flag = flag && points[count] ≈ p
-        flag = flag && weights[count] ≈ w
+        flag = flag && allequal(p,points[count])
+        flag = flag && w == weights[count]
         count += 1
     end
     return flag
 end
 
 @test test_iteration(quad,p,w)
+qp,qw = quad[3]
+@test allequal(qp,p[3])
+@test qw == w[3]
 
-pq,wq = quad[3]
-@test pq ≈ p[3]
-@test wq ≈ w[3]
+@test IDQ.affine_map(0.0,-1.,1.,0.,1.) ≈ 0.5
+@test IDQ.affine_map(0.75,0.,1.,5.,10.) ≈ 8.75
+points = [-0.5 0.0 0.5]
+@test allequal(IDQ.affine_map.(points,-1.,1.,0.,1.),[0.25 0.5 0.75])
 
-@test_throws ArgumentError IDQ.quadrature_transformers(2.0,1.0)
-@test_logs (:warn, "Transforming quadrature rule to a null domain") IDQ.quadrature_transformers(1.0,1.0)
-a = 1.0; b = 2.0
-scale, middle = IDQ.quadrature_transformers(a,b)
-@test scale ≈ 0.5(b - a)
-@test middle ≈ 0.5*(b+a)
+@test IDQ.affine_map_derivative(1.0,-1.,1.,0.,1.) ≈ 0.5
+@test IDQ.affine_map_derivative(1.0,-1.,1.,-5.,5.) ≈ 5.0
+weights = [1.,2.,3.]
+@test allequal(IDQ.affine_map_derivative.(weights,2.,3.,5.,10.),5weights)
 
-quad = IDQ.ReferenceQuadratureRule(3)
-p,w = IDQ.transform(quad, 0.0, 1.0)
-scale = 0.5
-middle = 0.5
-@test p ≈ quad.points*scale .+ middle
-@test w ≈ quad.weights*scale
-
-quad = IDQ.ReferenceQuadratureRule(3)
-p,w = IDQ.transform(quad, 0..1)
-scale = 0.5
-middle = 0.5
-@test p ≈ quad.points*scale .+ middle
-@test w ≈ quad.weights*scale
-
-points = Array(reshape(1.0:40.0,4,10))
-weights = collect(1.0:10.0)
-@test_throws ArgumentError QuadratureRule(points, weights)
-weights = collect(1.0:20.0)
-points = Array(reshape(1.0:30.0,3,10))
-@test_throws DimensionMismatch QuadratureRule(points, weights)
-
-quad = QuadratureRule(Float64, 2)
-@test typeof(quad) == QuadratureRule{2,Float64}
-@test typeof(quad.points) == Matrix{Float64}
-@test typeof(quad.weights) == Vector{Float64}
-@test size(quad.points) == (2,0)
-@test length(quad.weights) == 0
-
-quad = QuadratureRule(BigFloat, 2)
-@test typeof(quad) == QuadratureRule{2,BigFloat}
-@test typeof(quad.points) == Matrix{BigFloat}
-@test typeof(quad.weights) == Vector{BigFloat}
-@test size(quad.points) == (2,0)
-@test length(quad.weights) == 0
-
-quad = QuadratureRule(2)
-@test typeof(quad) == QuadratureRule{2,Float64}
-@test typeof(quad.points) == Matrix{Float64}
-@test typeof(quad.weights) == Vector{Float64}
-@test size(quad.points) == (2,0)
-@test length(quad.weights) == 0
-
-quad = QuadratureRule(3)
-@test typeof(quad) == QuadratureRule{3,Float64}
-@test typeof(quad.points) == Matrix{Float64}
-@test typeof(quad.weights) == Vector{Float64}
-@test size(quad.points) == (3,0)
-@test length(quad.weights) == 0
-
-function test_multidim_iteration(quad,points,weights)
-    flag = true
-    dim,npoints = size(points)
-    count = 1
-    for (p,w) in quad
-        flag = flag && p ≈ points[:,count]
-        flag = flag && w ≈ weights[count]
-        count += 1
-    end
-    return flag
-end
-
-points = Array(reshape(1.0:30.0,3,10))
-weights = Array(0.1:0.1:1.0)
-quad = QuadratureRule(points, weights)
-@test test_multidim_iteration(quad,points,weights)
-p,w = quad[3]
-@test p ≈ points[:,3]
-@test w ≈ weights[3]
-
-quad = QuadratureRule(2)
-points = Array(reshape(1.0:20.0,2,10))
-weights = Array(1.0:10.0)
-update!(quad,points,weights)
-@test quad.points ≈ points
-@test quad.weights ≈ weights
-more_points = Array(reshape(31.0:50.0,2,10))
-more_weights = Array(11.0:20.0)
-update!(quad,more_points,more_weights)
-@test quad.points ≈ hcat(points,more_points)
-@test quad.weights ≈ vcat(weights,more_weights)
-
-more_points = Array(reshape(1.0:40.0,4,10))
-more_weights = Array(1.0:10.0)
-@test_throws DimensionMismatch update!(quad,more_points,more_weights)
-more_weights = Array(0.0:11.0)
-@test_throws DimensionMismatch update!(quad,more_points,more_weights)
-
-quad = QuadratureRule(2)
-next_point = [1.0, 2.0, 3.0]
-next_weight = 1.5
-@test_throws DimensionMismatch update!(quad, next_point, next_weight)
-next_point = [1.0,2.0]
-next_weight = 1.5
-update!(quad, next_point, next_weight)
-@test size(quad.points) == (2,1)
-@test length(quad.weights) == 1
-@test quad.points[:,1] ≈ next_point
-@test quad.weights[1] ≈ next_weight
-
-p1 = [1.0 2.0 3.0]
-tp = IDQ.tensorProductPoints(p1,p1)
-@test tp ≈ [1.0 1.0 1.0 2.0 2.0 2.0 3.0 3.0 3.0
-            1.0 2.0 3.0 1.0 2.0 3.0 1.0 2.0 3.0]
-
-function test_tensor_product_2d(quad,p1,p2,w1,w2)
-    flag = true
-    npoints = length(w)
-    count = 1
-    for i in 1:npoints
-        for j in 1:npoints
-            flag = flag && quad.points[1,count] ≈ p1[i]
-            flag = flag && quad.points[2,count] ≈ p2[j]
-            flag = flag && quad.weights[count] ≈ w1[i]*w2[j]
-        end
-    end
-    return flag
-end
+points = [2. 3. 4.]
+weights = [5.,7.,9.]
+p,w = IDQ.transform(points,weights,1.,5.,-1.,1.)
+@test allequal(p,[-0.5 0.0 0.5])
+@test allequal(w,0.5weights)
 
 quad = IDQ.ReferenceQuadratureRule(3)
-box = IntervalBox(-1..1,0..1)
-p1, w1 = IDQ.transform(quad,box[1])
-p2, w2 = IDQ.transform(quad,box[2])
-tquad = IDQ.tensorProduct(quad, box)
-@test test_tensor_product_2d(tquad,p1,p2,w1,w2)
+p,w = IDQ.transform(quad,5.,10.)
+@test allequal(p,5.0 .+ 2.5*(quad.points .+ 1))
+@test allequal(w,2.5*quad.weights)
 
+p,w = IDQ.transform(quad,3..4)
+@test allequal(p,3 .+ 0.5*(quad.points .+ 1))
+@test allequal(w,0.5*quad.weights)
 
-quad1d = IDQ.ReferenceQuadratureRule(2)
-@test_throws ArgumentError TensorProductQuadratureRule(3,quad1d)
-quad = TensorProductQuadratureRule(1,quad1d)
-@test all(quad.points .== quad1d.points)
-@test all(quad.weights .== quad1d.weights)
-@test typeof(quad) == TensorProductQuadratureRule{1,typeof(quad1d),2,Float64}
-@test typeof(quad) <: IDQ.AbstractQuadratureRule{1,Float64}
-p,w = quad[2]
-@test all(p .== quad1d.points[2])
-@test all(w .== quad1d.weights[2])
-@test test_multidim_iteration(quad,quad1d.points,quad1d.weights)
+p = SMatrix{4,3}(zeros(4,3))
+w = SVector{3}([0.5,1.0,0.5])
+@test_throws AssertionError IDQ.QuadratureRule(p,w)
+p = SMatrix{2,4}([-1. -1 +1 +1
+                  -1  +1 -1 +1])
+w = SVector{5}([1.,1.,1.,1.,1.])
+@test_throws AssertionError IDQ.QuadratureRule(p,w)
 
-quad1d = IDQ.ReferenceQuadratureRule(4)
-quad = TensorProductQuadratureRule(2,quad1d)
-@test typeof(quad) == TensorProductQuadratureRule{2,typeof(quad1d),16,Float64}
-@test typeof(quad) <: IDQ.AbstractQuadratureRule{2,Float64}
-p,w = quad[3]
-@test all(p .== [quad1d.points[1],quad1d.points[3]])
-@test w == quad1d.weights[1]*quad1d.weights[3]
+w = SVector{4}([1.,1.,1.,1.])
+quad = IDQ.QuadratureRule(p,w)
+@test allequal(quad.points,p)
+@test allequal(quad.weights,w)
 
-@test test_tensor_product_2d(quad,quad1d.points,
-    quad1d.points,quad1d.weights,quad1d.weights)
+p = [-1. -1 +1 +1
+     -1  +1 -1 +1
+     -1  +1 -1 +1
+     -1  +1 -1 +1]
+w = [1.,1.,1.,1.]
+@test_throws AssertionError IDQ.QuadratureRule(p,w)
 
-quad1d = ReferenceQuadratureRule(2)
-@test_throws ArgumentError TensorProductQuadratureRule(1,0)
-quad = TensorProductQuadratureRule(1,2)
-@test typeof(quad) == TensorProductQuadratureRule{1,typeof(quad1d),2,Float64}
-@test all(quad.points .== quad1d.points)
-@test all(quad.weights .== quad1d.weights)
+p = [-1. -1 +1 +1
+     -1  +1 -1 +1]
+w = [1.,1.,1.,1.,1.]
+@test_throws AssertionError IDQ.QuadratureRule(p,w)
 
-quad1d = ReferenceQuadratureRule(4)
-quad = TensorProductQuadratureRule(2,4)
-@test typeof(quad) == TensorProductQuadratureRule{2,typeof(quad1d),16,Float64}
-@test test_tensor_product_2d(quad,quad1d.points,quad1d.points,
-    quad1d.weights,quad1d.weights)
+w = [1.,1.,1.,1.]
+quad = IDQ.QuadratureRule(p,w)
+@test typeof(quad) == IDQ.QuadratureRule{2,4,float_type}
+@test supertype(typeof(quad)) == IDQ.AbstractQuadratureRule{2,4}
+@test allequal(quad.points,p)
+@test allequal(quad.weights,w)
 
+p1 = [1. 2.]
+p2 = [3. 4.]
+p = IDQ.tensor_product_points(p1,p2)
+testp = [1. 1.  2.  2.
+         3. 4.  3.  4.]
+@test allequal(p,testp)
 
-quad = TensorProductQuadratureRule(2,4)
-@test length(quad) == 16
+box = IntervalBox(-1..1,2)
+quad = IDQ.ReferenceQuadratureRule(2)
+tq = IDQ.tensor_product(quad,box)
+p = quad.points
+testp = [p[1]  p[1]  p[2]  p[2]
+         p[1]  p[2]  p[1]  p[2]]
+testw = [w[1]*w[1],w[1]*w[2],w[2]*w[1],w[2]*w[2]]
+@test allequal(tq.points,testp)
+@test allequal(tq.weights,testw)
 
-quad = TensorProductQuadratureRule(1,5)
-@test length(quad) == 5
+box = IntervalBox(0..1,2..3)
+tq = IDQ.tensor_product(quad,box)
+p1 = 0.5*(quad.points .+ 1.)
+p2 = 2. .+ 0.5*(quad.points .+ 1.)
+w = 0.5*quad.weights
+testp = [p1[1]  p1[1]  p1[2]  p1[2]
+         p2[1]  p2[2]  p2[1]  p2[2]]
+testw = kron(w,w)
+@test allequal(tq.points,testp)
+@test allequal(tq.weights,testw)
+
+@test_throws AssertionError IDQ.tensor_product_quadrature(1,2)
+@test_throws AssertionError IDQ.tensor_product_quadrature(3,2)
+@test_throws AssertionError IDQ.tensor_product_quadrature(2,0)
+@test_throws AssertionError IDQ.tensor_product_quadrature(2,-1)
+
+tq = IDQ.tensor_product_quadrature(2,2)
+quad = IDQ.ReferenceQuadratureRule(2)
+p = quad.points
+testp = [p[1]  p[1]  p[2]  p[2]
+         p[1]  p[2]  p[1]  p[2]]
+testw = kron(quad.weights,quad.weights)
+@test allequal(tq.points,testp)
+@test allequal(tq.weights,testw)
