@@ -18,7 +18,9 @@ struct ReferenceQuadratureRule{NQ,T} <: AbstractQuadratureRule{1,NQ}
     end
 end
 
-function ReferenceQuadratureRule(points::M,weights::V,lo,hi) where {M<:AbstractMatrix} where {V<:AbstractVector}
+function ReferenceQuadratureRule(points::M,weights::V,
+        lo,hi) where {M<:AbstractMatrix} where {V<:AbstractVector}
+
     dim,npoints = size(points)
     nweights = length(weights)
     @assert dim == 1
@@ -28,7 +30,9 @@ function ReferenceQuadratureRule(points::M,weights::V,lo,hi) where {M<:AbstractM
     return ReferenceQuadratureRule(sp,sw,lo,hi)
 end
 
-function ReferenceQuadratureRule(points::V1,weights::V2,lo,hi) where {V1<:AbstractVector,V2<:AbstractVector}
+function ReferenceQuadratureRule(points::V1,weights::V2,
+        lo,hi) where {V1<:AbstractVector,V2<:AbstractVector}
+
     return ReferenceQuadratureRule(points',weights,lo,hi)
 end
 
@@ -38,7 +42,9 @@ function ReferenceQuadratureRule(N::Z) where {Z<:Integer}
     return ReferenceQuadratureRule(points,weights,-1.0,1.0)
 end
 
-function Base.iterate(quad::Q, state=1) where {Q<:AbstractQuadratureRule{dim,NQ}} where {dim,NQ}
+function Base.iterate(quad::Q,
+        state=1) where {Q<:AbstractQuadratureRule{dim,NQ}} where {dim,NQ}
+
     if state > NQ
         return nothing
     else
@@ -46,7 +52,10 @@ function Base.iterate(quad::Q, state=1) where {Q<:AbstractQuadratureRule{dim,NQ}
     end
 end
 
-function Base.getindex(quad::Q,i::Z) where {Q<:AbstractQuadratureRule{dim,NQ}} where {dim,NQ,Z<:Integer}
+function Base.getindex(quad::Q,
+        i::Z) where
+        {Q<:AbstractQuadratureRule{dim,NQ}} where {dim,NQ,Z<:Integer}
+
     1 <= i <= NQ || throw(BoundsError(quad,i))
     return (view(quad.points,1:dim,i),quad.weights[i])
 end
@@ -76,13 +85,17 @@ end
 struct QuadratureRule{dim,NQ,T} <: AbstractQuadratureRule{dim,NQ}
     points::SMatrix{dim,NQ,T}
     weights::SVector{NQ,T}
-    function QuadratureRule(points::SMatrix{dim,NQ,T},weights::SVector{NQ,T}) where {dim,NQ,T}
+    function QuadratureRule(points::SMatrix{dim,NQ,T},
+            weights::SVector{NQ,T}) where {dim,NQ,T}
+
         @assert 1 <= dim <= 3
         new{dim,NQ,T}(points,weights)
     end
 end
 
-function QuadratureRule(points::M,weights::V) where {M<:AbstractMatrix,V<:AbstractVector}
+function QuadratureRule(points::M,
+        weights::V) where {M<:AbstractMatrix,V<:AbstractVector}
+
     dim,np = size(points)
     nw = length(weights)
     @assert np == nw

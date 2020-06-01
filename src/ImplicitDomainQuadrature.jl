@@ -14,6 +14,6 @@ include("bounds.jl")
 include("quadrature_structs.jl")
 include("dimension_reduction.jl")
 
-export quadrature, QuadratureRule, TensorProductQuadratureRule
+export quadrature, QuadratureRule
 
 end # module
