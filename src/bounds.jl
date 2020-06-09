@@ -134,7 +134,7 @@ return
 - `-1` if `f` is uniformly negative on `int`
 - `0` if `f` has at least one zero crossing in `int` (f assumed continuous)
 """
-function Base.sign(f,int::IntervalBox,order,tol)
+function Base.sign(f,int::IntervalBox; order = 5, tol = 1e-2)
     tree, search = run_search(f,int,order,tol)
     if search.found_positive && search.found_negative
         return 0
@@ -175,6 +175,6 @@ function Base.sign(P::InterpolatingPolynomial{1},
     if !isinf(max_coeff) && !isinf(min_coeff) && max_coeff > 0 && min_coeff < 0
         return 0
     else
-        return sign((x...) -> P(x...), int, order, tol)
+        return sign((x...) -> P(x...), int, order = order, tol = tol)
     end
 end

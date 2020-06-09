@@ -116,37 +116,37 @@ boxes = data(tree)
 @test search.breached_tolerance == false
 
 box = IntervalBox(-1..1,1)
-@test sign(f, box, 1, 1e-2) == 0
+@test sign(f, box, order = 1, tol = 1e-2) == 0
 f(x) = x*(x - 0.1)*(x - 1.0)
-@test sign(f, box, 1, 1e-2) == 0
+@test sign(f, box, order = 1, tol = 1e-2) == 0
 
 f(x) = (x - 0.5)*(x+0.5) + 10
 box = IntervalBox(-1..1,1)
-@test sign(f, box, 1, 1e-2) == 1
+@test sign(f, box, order = 1, tol = 1e-2) == 1
 
 f(x) = (x - 0.5)*(x+0.5) - 3
 box = IntervalBox(-1..1,1)
-@test sign(f, box, 1, 1e-2) == -1
+@test sign(f, box, order = 1, tol = 1e-2) == -1
 
 f(x) = x*(x - 1e-4)
 box = IntervalBox(-1..1,1)
-@test_throws ArgumentError sign(f, box, 1, 1e-2)
+@test_throws ArgumentError sign(f, box, order = 1, tol = 1e-2)
 
 box = IntervalBox(2 .. 3,1)
 g(x) = (x - 2.5)*(x - 2.6)*(x - 2.9)
 orders = 1:10
-s = [sign(g,box,i,1e-2) for i in orders]
+s = [sign(g,box, order = i, tol = 1e-2) for i in orders]
 @test all(i -> s[i] == 0, 1:length(orders))
 
 r = 0.5
 f2(x,y) = x^2 + y^2 - r^2
 box = IntervalBox(-1..1,2)
-s = [sign(f2,box,i,1e-2) for i in orders]
+s = [sign(f2,box, order = i, tol = 1e-2) for i in orders]
 @test all(i -> s[i] == 0, 1:length(orders))
 
 g2(x,y) = sin(2pi*x)*cos(2pi*y) + 2
 box = IntervalBox(-1..1,2)
-s = [sign(g2,box,i,1e-2) for i in orders]
+s = [sign(g2,box, order = i, tol = 1e-2) for i in orders]
 @test all(i -> s[i] == 1, 1:length(orders))
 
 P = InterpolatingPolynomial(1,2,2)

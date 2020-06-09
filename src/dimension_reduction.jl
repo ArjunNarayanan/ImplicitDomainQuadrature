@@ -229,7 +229,7 @@ end
 function is_suitable(height_dir,func,box;order=5,tol=1e-3)
 
     gradf(x...) = gradient(func,height_dir,x...)
-    s = sign(gradf,box,order,tol)
+    s = sign(gradf,box,order=order,tol=tol)
     flag = s == 0 ? false : true
     return flag, s
 
