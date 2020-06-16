@@ -269,11 +269,13 @@ function quadrature(func,sign_condition,surface,box::IntervalBox{2},
             lower_box, quad1d)
 
         if surface
-            return surface_quadrature(func,height_dir,box[height_dir],
-                quad.points,quad.weights)
+            newquad = surface_quadrature(func,height_dir,box[height_dir],
+                        quad.points,quad.weights)
+            return QuadratureRule(newquad.points,newquad.weights)
         else
-            return quadrature([func],[sign_condition],height_dir,
-                box[height_dir],quad.points,quad.weights,quad1d)
+            newquad = quadrature([func],[sign_condition],height_dir,
+                        box[height_dir],quad.points,quad.weights,quad1d)
+            return QuadratureRule(newquad.points,newquad.weights)
         end
     end
 end
