@@ -111,6 +111,10 @@ function tensor_product_points(p1::M,p2::M) where {M<:AbstractMatrix}
     return vcat(repeat(p1,inner=(1,n2)),repeat(p2,outer=(1,n1)))
 end
 
+function tensor_product(quad::ReferenceQuadratureRule,box::IntervalBox{1})
+    return QuadratureRule(quad.points,quad.weights)
+end
+
 function tensor_product(quad::ReferenceQuadratureRule,box::IntervalBox{2})
     p1,w1 = transform(quad,box[1])
     p2,w2 = transform(quad,box[2])
