@@ -124,7 +124,7 @@ function tensor_product(quad::ReferenceQuadratureRule,box::IntervalBox{2})
 end
 
 function tensor_product_quadrature(D::Z,NQ::Z) where {Z<:Integer}
-    @assert D == 2 "Only 2D currently supported"
+    # @assert D == 2 "Only 2D currently supported"
     quad1d = ReferenceQuadratureRule(NQ)
     box = IntervalBox(-1.0..1.0,D)
     return tensor_product(quad1d,box)
