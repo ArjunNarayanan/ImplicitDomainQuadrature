@@ -160,8 +160,6 @@ testw = kron(w,w)
 @test allequal(tq.points,testp)
 @test allequal(tq.weights,testw)
 
-@test_throws AssertionError IDQ.tensor_product_quadrature(1,2)
-@test_throws AssertionError IDQ.tensor_product_quadrature(3,2)
 @test_throws AssertionError IDQ.tensor_product_quadrature(2,0)
 @test_throws AssertionError IDQ.tensor_product_quadrature(2,-1)
 
