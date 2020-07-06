@@ -1,6 +1,6 @@
 function unique_root_intervals(f, x1, x2)
     all_roots = roots(f, Interval(x1, x2))
-    @assert all([r.status == :unique for r in all_roots])
+    # @assert all([r.status == :unique for r in all_roots])
     return [r.interval for r in all_roots]
 end
 
