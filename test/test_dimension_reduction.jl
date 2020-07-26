@@ -106,6 +106,11 @@ p,w = IDQ.transform(quad1d, 1.0, 2.0)
 @test allapprox(quad.points,p)
 @test allapprox(quad.weights,w)
 
+qr = IDQ.QuadratureRule(quad)
+@test allapprox(qr.points,p)
+@test allapprox(qr.weights,w)
+@test typeof(qr) == IDQ.QuadratureRule{1,3,typeof(1.0)}
+
 quad = IDQ.quadrature([f,g], [+1,+1], Interval(0.0,3.5), quad1d)
 p,w = IDQ.transform(quad1d, 3.0, 3.5)
 @test allapprox(quad.points, p)

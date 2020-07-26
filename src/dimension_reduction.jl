@@ -81,6 +81,10 @@ function TemporaryQuadrature(T,D::Z) where {Z<:Integer}
     return TemporaryQuadrature(p,w)
 end
 
+function QuadratureRule(quad::TemporaryQuadrature)
+    return QuadratureRule(quad.points,quad.weights)
+end
+
 function update!(quad::TemporaryQuadrature,p::V,w) where {V<:AbstractVector}
     d = length(p)
     nw = length(w)
