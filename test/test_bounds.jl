@@ -1,8 +1,10 @@
-using ImplicitDomainQuadrature
 using Test
+using PolynomialBasis
 using IntervalArithmetic
 using TaylorModels
 using BranchAndPrune
+# using Revise
+using ImplicitDomainQuadrature
 
 IDQ = ImplicitDomainQuadrature
 
@@ -37,6 +39,12 @@ b = 2.0
 @test muladd(tm,a,b) == a*tm + b
 @test muladd(a,tm,b) == a*tm + b
 @test muladd(tm,tm,b) == tm*tm + b
+@test muladd(a,b,tm) == a*b+tm
+tm1 = TaylorModelN(1,1,x0,box)
+tm2 = TaylorModelN(1,1,x0,box)
+tm3 = TaylorModelN(1,1,x0,box)
+@test muladd(tm1,a,tm2) == a*tm1 + tm2
+@test muladd(tm1,tm2,tm3) == tm1*tm2 + tm3
 
 @test IDQ.zeroBox(2) == IntervalBox(0..0,2)
 @test IDQ.symBox(3) == IntervalBox(-1..1,3)
@@ -108,42 +116,42 @@ boxes = data(tree)
 @test search.breached_tolerance == false
 
 box = IntervalBox(-1..1,1)
-@test sign(f, box, 1, 1e-2) == 0
+@test sign(f, box, order = 1, tol = 1e-2) == 0
 f(x) = x*(x - 0.1)*(x - 1.0)
-@test sign(f, box, 1, 1e-2) == 0
+@test sign(f, box, order = 1, tol = 1e-2) == 0
 
 f(x) = (x - 0.5)*(x+0.5) + 10
 box = IntervalBox(-1..1,1)
-@test sign(f, box, 1, 1e-2) == 1
+@test sign(f, box, order = 1, tol = 1e-2) == 1
 
 f(x) = (x - 0.5)*(x+0.5) - 3
 box = IntervalBox(-1..1,1)
-@test sign(f, box, 1, 1e-2) == -1
+@test sign(f, box, order = 1, tol = 1e-2) == -1
 
 f(x) = x*(x - 1e-4)
 box = IntervalBox(-1..1,1)
-@test_throws ArgumentError sign(f, box, 1, 1e-2)
+@test_throws ArgumentError sign(f, box, order = 1, tol = 1e-2)
 
 box = IntervalBox(2 .. 3,1)
 g(x) = (x - 2.5)*(x - 2.6)*(x - 2.9)
 orders = 1:10
-s = [sign(g,box,i,1e-2) for i in orders]
+s = [sign(g,box, order = i, tol = 1e-2) for i in orders]
 @test all(i -> s[i] == 0, 1:length(orders))
 
 r = 0.5
 f2(x,y) = x^2 + y^2 - r^2
 box = IntervalBox(-1..1,2)
-s = [sign(f2,box,i,1e-2) for i in orders]
+s = [sign(f2,box, order = i, tol = 1e-2) for i in orders]
 @test all(i -> s[i] == 0, 1:length(orders))
 
 g2(x,y) = sin(2pi*x)*cos(2pi*y) + 2
 box = IntervalBox(-1..1,2)
-s = [sign(g2,box,i,1e-2) for i in orders]
+s = [sign(g2,box, order = i, tol = 1e-2) for i in orders]
 @test all(i -> s[i] == 1, 1:length(orders))
 
 P = InterpolatingPolynomial(1,2,2)
 coeffs = 1:9
-IDQ.update!(P,coeffs)
+PolynomialBasis.update!(P,coeffs)
 box = IntervalBox(-1..1,2)
 max_coeff, min_coeff = IDQ.extremal_coeffs_in_box(P,box)
 @test max_coeff ≈ 9.0
@@ -159,14 +167,14 @@ max_coeff, min_coeff = IDQ.extremal_coeffs_in_box(P,box)
 
 P = InterpolatingPolynomial(1,2,3)
 coeffs = (1:16) .- 5.5
-IDQ.update!(P,coeffs)
+PolynomialBasis.update!(P,coeffs)
 box = IntervalBox(-1..1,2)
 s = sign(P,box)
 @test s == 0
 
 P = InterpolatingPolynomial(1,2,3)
 coeffs = 1.0:16.0
-IDQ.update!(P,coeffs)
+PolynomialBasis.update!(P,coeffs)
 box = IntervalBox(-1..1,2)
 s = sign(P,box)
 @test s == 1

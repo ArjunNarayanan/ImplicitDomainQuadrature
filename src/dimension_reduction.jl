@@ -1,40 +1,19 @@
-function checkUniqueRoots(_roots::Vector{Root{Interval{T}}}) where {T}
-    for r in _roots
-        if r.status != :unique
-            msg = "Intervals with possibly non-unique roots were found.\nPossible Fix: Adjust the discretization."
-            throw(ErrorException(msg))
-        end
-    end
-end
-
-"""
-    unique_root_intervals(f, x1::T, x2::T) where {T<:Real}
-returns sub-intervals in `[x1,x2]` which contain unique roots of `f`
-"""
-function unique_root_intervals(f, x1::T, x2::T) where {T<:Real}
+function unique_root_intervals(f, x1, x2)
     all_roots = roots(f, Interval(x1, x2))
-    checkUniqueRoots(all_roots)
+    # @assert all([r.status == :unique for r in all_roots])
     return [r.interval for r in all_roots]
 end
 
-"""
-    unique_roots(f, x1::T, x2::T) where {T<:Real}
-returns the unique roots of `f` in the interval `(x1, x2)`
-"""
-function unique_roots(f, x1::T, x2::T) where {T<:Real}
+function unique_roots(f, x1, x2)
     root_intervals = unique_root_intervals(f, x1, x2)
-    _roots = zeros(T, length(root_intervals))
+    _roots = zeros(length(root_intervals))
     for (idx,int) in enumerate(root_intervals)
         _roots[idx] = find_zero(f, (int.lo, int.hi), Order1())
     end
     return _roots
 end
 
-"""
-    roots_and_ends(F::Vector, x1::T, x2::T)
-return a sorted array containing `[x1, <roots of each f in F>, x2]`
-"""
-function roots_and_ends(F::Vector, x1::T, x2::T) where {T<:Real}
+function roots_and_ends(F, x1, x2)
     r = [x1,x2]
     for f in F
         roots = unique_roots(f, x1, x2)
@@ -43,17 +22,7 @@ function roots_and_ends(F::Vector, x1::T, x2::T) where {T<:Real}
     return sort!(r)
 end
 
-"""
-    extend(x0::Number, k::Int, x::Number)
-extend `x0` into 2D space by inserting `x` in direction `k`
-    extend(x0::AbstractVector, k::Int, x::Number)
-extend the point vector `x0` into `d+1` dimensional space by using `x` as the
-`k`th coordinate value in the new point vector
-    extend(x0::AbstractVector, k::Int, x::AbstractMatrix)
-extend the point vector `x0` along direction `k` treating `x` as the new
-coordinate values
-"""
-function extend(x0::Number, k::Int, x::Number)
+function extend(x0::T,k,x) where {T<:Number}
     if k == 1
         return [x, x0]
     elseif k == 2
@@ -63,7 +32,7 @@ function extend(x0::Number, k::Int, x::Number)
     end
 end
 
-function extend(x0::AbstractVector, k::Int, x::Number)
+function extend(x0::V,k,x::T) where {V<:AbstractVector,T<:Number}
     dim = length(x0)
     if dim == 1
         return extend(x0[1],k,x)
@@ -72,11 +41,11 @@ function extend(x0::AbstractVector, k::Int, x::Number)
     end
 end
 
-function extend(x0::AbstractVector, k::Int, x::AbstractMatrix)
+function extend(x0::V,k,x::M) where {V<:AbstractVector,M<:AbstractMatrix}
     old_dim = length(x0)
     dim, npoints = size(x)
     if dim != 1
-        msg = "Extension can only be performed one dimension at a time, got dim = $dim"
+        msg = "Current support for dim = 1, got dim = $dim"
         throw(ArgumentError(msg))
     end
 
@@ -90,189 +59,188 @@ function extend(x0::AbstractVector, k::Int, x::AbstractMatrix)
     end
 end
 
-"""
-    signConditionsSatisfied(funcs,xc,sign_conditions)
-return true if each `f` in `funcs` evaluated at `xc` has the sign specified in
-`sign_conditions`.
-Note: if `sign_conditions[i] == 0` then the function always returns `true`.
-"""
-function signConditionsSatisfied(funcs,xc,sign_conditions)
+mutable struct TemporaryQuadrature{T}
+    points::Matrix{T}
+    weights::Vector{T}
+    function TemporaryQuadrature(p::Matrix{T},w::Vector{T}) where {T}
+        d,np = size(p)
+        nw = length(w)
+        @assert np == nw
+        new{T}(p,w)
+    end
+end
+
+function sign_conditions_satisfied(funcs,xc,sign_conditions)
     return all(i -> funcs[i](xc)*sign_conditions[i] >= 0.0, 1:length(funcs))
 end
 
-
-function check_num_funcs_conds(nfuncs,nconds)
-    if nfuncs != nconds
-        msg = "Require number of functions same as number of sign conditions, got $nfuncs != $nconds"
-        throw(DimensionMismatch(msg))
-    end
+function TemporaryQuadrature(T,D::Z) where {Z<:Integer}
+    @assert 1 <= D <= 3
+    p = Matrix{T}(undef,D,0)
+    w = Vector{T}(undef,0)
+    return TemporaryQuadrature(p,w)
 end
-"""
-    quadrature(F::Vector, sign_conditions::Vector{Int}, lo::T, hi::T, quad1d::ReferenceQuadratureRule{N,T}) where {N,T}
-return a 1D quadrature rule that can be used to integrate in the domain where
-each `f in F` has sign specified in `sign_conditions` in the interval `[lo,hi]`
-    quadrature(F::Vector, sign_conditions::Vector{Int}, int::Interval{T}, quad1d::ReferenceQuadratureRule{N,T}) where {N,T}
-conveniance function for when the interval over which the quadrature rule is required is specified by an `Interval` type
-    quadrature(F::Vector, sign_conditions::Vector{Int}, height_dir::Int, lo::T, hi::T, x0::AbstractVector{T}, w0::T, quad1d::ReferenceQuadratureRule{N,T}) where {N,T}
-return a tuple `points,weights` representing quadrature points and weights obtained by transforming `quad1d` into an interval bounded by `x0` and the
-zero level set of `F` by extending along `height_dir`
-    quadrature(F::Vector, sign_conditions::Vector{Int}, height_dir::Int, lo::T, hi::T, x0::AbstractMatrix, w0::AbstractVector, quad1d::ReferenceQuadratureRule{N,T}) where {N,T}
-"""
-function quadrature(F::Vector, sign_conditions::Vector{Int}, lo::T, hi::T, quad1d::ReferenceQuadratureRule{N,T}) where {N,T}
-    nfuncs = length(F)
+
+function QuadratureRule(quad::TemporaryQuadrature)
+    return QuadratureRule(quad.points,quad.weights)
+end
+
+function update!(quad::TemporaryQuadrature,p::V,w) where {V<:AbstractVector}
+    d = length(p)
+    nw = length(w)
+    dq,nqp = size(quad.points)
+    @assert dq == d
+    @assert nw == 1
+    quad.points = hcat(quad.points,p)
+    append!(quad.weights,w)
+end
+
+function update!(quad::TemporaryQuadrature,p::M,w) where {M<:AbstractMatrix}
+    d,np = size(p)
+    nw = length(w)
+    dq,nqp = size(quad.points)
+    @assert dq == d
+    @assert nw == np
+    quad.points = hcat(quad.points,p)
+    append!(quad.weights,w)
+end
+
+function quadrature(funcs,sign_conditions,lo,hi,
+    quad1d::ReferenceQuadratureRule{N,T}) where {N,T}
+
+    nfuncs = length(funcs)
     nconds = length(sign_conditions)
-    check_num_funcs_conds(nfuncs,nconds)
+    @assert nfuncs == nconds
 
-    quad = QuadratureRule(T,1)
+    quad = TemporaryQuadrature(T,1)
 
-    roots = roots_and_ends(F,lo,hi)
+    roots = roots_and_ends(funcs,lo,hi)
     for j in 1:length(roots)-1
         xc = 0.5*(roots[j] + roots[j+1])
-        if signConditionsSatisfied(F,xc,sign_conditions)
+        if sign_conditions_satisfied(funcs,xc,sign_conditions)
             p,w = transform(quad1d, roots[j], roots[j+1])
             update!(quad, p, w)
         end
     end
     return quad
+
 end
 
-function quadrature(F::Vector, sign_conditions::Vector{Int}, int::Interval{T}, quad1d::ReferenceQuadratureRule{N,T}) where {N,T}
-    return quadrature(F, sign_conditions, int.lo, int.hi, quad1d)
+function quadrature(funcs,sign_conditions,interval,quad1d)
+
+    return quadrature(funcs,sign_conditions,interval.lo,interval.hi,quad1d)
 end
 
-function quadrature(F::Vector, sign_conditions::Vector{Int}, height_dir::Int, lo::T, hi::T, x0::AbstractVector{T}, w0::T, quad1d::ReferenceQuadratureRule{N,T}) where {N,T}
+function quadrature(funcs,sign_conditions,height_dir,lo,hi,x0::V,w0,
+    quad1d::ReferenceQuadratureRule{N,T}) where {N,T,V<:AbstractVector}
 
-    @assert length(F) == length(sign_conditions)
-
+    @assert length(funcs) == length(sign_conditions)
 
     lower_dim = length(x0)
     dim = lower_dim + 1
-    points = Matrix{T}(undef, dim, 0)
-    weights = Vector{T}(undef, 0)
+    quad = TemporaryQuadrature(T,dim)
 
-    extended_funcs = [x -> f(extend(x0,height_dir,x)) for f in F]
+    extended_funcs = [x -> f(extend(x0,height_dir,x)) for f in funcs]
     roots = roots_and_ends(extended_funcs,lo,hi)
     for j in 1:length(roots)-1
         xc = 0.5*(roots[j] + roots[j+1])
-        if signConditionsSatisfied(extended_funcs,xc,sign_conditions)
+        if sign_conditions_satisfied(extended_funcs,xc,sign_conditions)
             p,w = transform(quad1d, roots[j], roots[j+1])
             extended_points = extend(x0,height_dir,p)
-            points = hcat(points, extended_points)
-            append!(weights, w0*w)
+            update!(quad,extended_points,w0*w)
         end
     end
-    return points, weights
+    return quad
+
 end
 
-function quadrature(F::Vector, sign_conditions::Vector{Int}, height_dir::Int, int::Interval{T}, x0::AbstractVector{T}, w0::T, quad1d::ReferenceQuadratureRule{N,T}) where {N,T}
-    return quadrature(F,sign_conditions,height_dir,int.lo,int.hi,x0,w0,quad1d)
-end
+function quadrature(funcs,sign_conditions,height_dir,lo,hi,x0::M,w0::V,
+    quad1d::ReferenceQuadratureRule{N,T}) where {N,T,V<:AbstractVector,M<:AbstractMatrix}
 
-function quadrature(F::Vector, sign_conditions::Vector{Int}, height_dir::Int, lo::T, hi::T, x0::AbstractMatrix{T}, w0::AbstractVector{T}, quad1d::ReferenceQuadratureRule{N,T}) where {N,T}
-
+    @assert length(funcs) == length(sign_conditions)
     lower_dim, npoints = size(x0)
+    nweights = length(w0)
+    @assert npoints == nweights
+
     dim = lower_dim + 1
-    quad = QuadratureRule(T, dim)
+    quad = TemporaryQuadrature(T,dim)
 
     for i in 1:npoints
-        x0p = view(x0, :, i)
+        x0p = view(x0,:,i)
         w0p = w0[i]
-        qp, qw = quadrature(F, sign_conditions, height_dir, lo, hi, x0p, w0p, quad1d)
-        update!(quad, qp, qw)
+        lq = quadrature(funcs,sign_conditions,height_dir,lo,hi,x0p,w0p,quad1d)
+        update!(quad,lq.points,lq.weights)
     end
     return quad
 end
 
-function quadrature(F::Vector, sign_conditions::Vector{Int}, height_dir::Int, int::Interval{T}, x0::AbstractMatrix{T}, w0::AbstractVector{T}, quad1d::ReferenceQuadratureRule{N,T}) where {N,T}
-    return quadrature(F,sign_conditions,height_dir,int.lo,int.hi,x0,w0,quad1d)
+function quadrature(funcs,sign_conditions,height_dir,interval::Interval,
+    x0,w0,quad1d)
+
+    return quadrature(funcs,sign_conditions,height_dir,
+            interval.lo,interval.hi,x0,w0,quad1d)
 end
 
-"""
-    surface_quadrature(F::InterpolatingPolynomial, height_dir::Int, lo::T, hi::T, x0::AbstractVector{T}, w0::T) where {T}
-return a `point,weight` pair representing a quadrature point and weight that is obtained by
-projecting `x0` along `height_dir` onto the zero level set of `F` within the interval `(lo,hi)`.
-`weight` is scaled appropriately by the curvature of `F`
-    surface_quadrature(F::InterpolatingPolynomial, height_dir::Int, int::Interval{T}, x0::AbstractVector{T}, w0::T) where {T}
-convenience function when the interval within which to project `x0` is defined by an `Interval` type
-    surface_quadrature(F::InterpolatingPolynomial, height_dir::Int, lo::T, hi::T, x0::AbstractMatrix{T}, w0::AbstractVector{T}) where {T}
-project each column of `x0` onto the zero level set of `F`
-    surface_quadrature(F::InterpolatingPolynomial, height_dir::Int, int::Interval{T}, x0::AbstractMatrix{T}, w0::AbstractVector{T}) where {T}
-    quadrature(P::InterpolatingPolynomial{N,NF,B,T}, sign_condition::Int, surface::Bool, box::IntervalBox{2,T}, quad1d::ReferenceQuadratureRule{NQ,T}) where {B<:TensorProductBasis{2}} where {N,NF,NQ,T}
-corresponds to Algorithm 3 of Robert Saye's 2015 SIAM paper
-"""
-function surface_quadrature(F::InterpolatingPolynomial, height_dir::Int, lo::T, hi::T, x0::AbstractVector{T}, w0::T) where {T}
+function surface_quadrature(func,height_dir,lo,hi,x0::V,w0) where {V<:AbstractVector}
 
-    extended_func(x) = F(extend(x0,height_dir,x))
-    roots = unique_roots(extended_func, lo, hi)
+    extended_func(x) = func(extend(x0,height_dir,x))
+    _roots = unique_roots(extended_func, lo, hi)
 
-    num_roots = length(roots)
+    num_roots = length(_roots)
     num_roots == 1 || throw(ArgumentError("Expected 1 root in given interval, got $num_roots roots"))
 
-    root = roots[1]
+    root = _roots[1]
     p = extend(x0,height_dir,root)
-    gradF = gradient(F, p)
+    gradF = gradient(func,p)
     jac = norm(gradF)/(abs(gradF[height_dir]))
     w = w0*jac
-    return p, w
+    return p,w
 end
 
-function surface_quadrature(F::InterpolatingPolynomial, height_dir::Int, int::Interval{T}, x0::AbstractVector{T}, w0::T) where {T}
-    return surface_quadrature(F,height_dir,int.lo,int.hi,x0,w0)
-end
-
-function surface_quadrature(F::InterpolatingPolynomial, height_dir::Int, lo::T, hi::T, x0::AbstractMatrix{T}, w0::AbstractVector{T}) where {T}
+function surface_quadrature(func,height_dir,lo,hi,x0::M,w0::V) where {M<:AbstractMatrix{T},V<:AbstractVector} where {T}
 
     lower_dim, npoints = size(x0)
+    nweights = length(w0)
+    @assert npoints == nweights
+
     dim = lower_dim + 1
-    points = zeros(T, dim, npoints)
-    weights = zeros(T, npoints)
+    quad = TemporaryQuadrature(T,dim)
 
     for i in 1:npoints
-        x0p = view(x0, :, i)
+        x0p = view(x0,:,i)
         w0p = w0[i]
-        qp, qw = surface_quadrature(F, height_dir, lo, hi, x0p, w0p)
-        points[:,i] = qp
-        weights[i] = qw
+        qp,qw = surface_quadrature(func,height_dir,lo,hi,x0p,w0p)
+        update!(quad,qp,qw)
     end
-
-    quad = QuadratureRule(points,weights)
     return quad
 end
 
-function surface_quadrature(F::InterpolatingPolynomial, height_dir::Int, int::Interval{T}, x0::AbstractMatrix{T}, w0::AbstractVector{T}) where {T}
-    return surface_quadrature(F,height_dir,int.lo,int.hi,x0,w0)
+function surface_quadrature(func,height_dir,interval::Interval,x0,w0)
+
+    return surface_quadrature(func,height_dir,interval.lo,interval.hi,x0,w0)
 end
 
-function height_direction(P::InterpolatingPolynomial, box::IntervalBox)
-    grad = gradient(P, mid(box))
-    if norm(grad) ≈ 0.0
-        msg = "Function has a zero gradient at the center of the given interval."
-        throw(ArgumentError(msg))
-    end
-    g = abs.(gradient(P, mid(box)))
-    k = LinearIndices(g)[argmax(g)]
-    return k
+function height_direction(func,xc)
+    grad = vec(gradient(func,xc))
+    @assert !(norm(grad) ≈ 0.0)
+    return argmax(abs.(grad))
 end
 
-"""
-    isSuitable(height_dir::Int, P::InterpolatingPolynomial, box::IntervalBox; order::Int = 5, tol::Float64 = 1e-3)
-checks if the given `height_dir` is a suitable height direction.
-"""
-function isSuitable(height_dir::Int, P::InterpolatingPolynomial, box::IntervalBox; order::Int = 5, tol::Float64 = 1e-3)
-    flag = true
-    gradFk(x...) = gradient(P,height_dir,x...)
-    s = sign(gradFk,box,order,tol)
-    if s == 0
-        flag = false
-    end
+function height_direction(func,box::IntervalBox)
+    return height_direction(func,mid(box))
+end
+
+function is_suitable(height_dir,func,box;order=5,tol=1e-3)
+
+    gradf(x...) = gradient(func,height_dir,x...)
+    s = sign(gradf,box,order=order,tol=tol)
+    flag = s == 0 ? false : true
     return flag, s
+
 end
 
-"""
-    Base.sign(m::Int,s::Int,S::Bool,sigma::Int)
-See sec. 3.2.4 of Robert Saye's 2015 SIAM paper
-"""
-function Base.sign(m::Int,s::Int,S::Bool,sigma::Int)
+function Base.sign(m::Z,s::Z,S::Bool,sigma::Z) where {Z<:Integer}
+
     if S || m == sigma*s
         return sigma*m
     else
@@ -280,30 +248,38 @@ function Base.sign(m::Int,s::Int,S::Bool,sigma::Int)
     end
 end
 
-function quadrature(P::InterpolatingPolynomial{N,NF,B,T}, sign_condition::Int, surface::Bool, box::IntervalBox{2,T}, quad1d::ReferenceQuadratureRule{NQ,T}) where {B<:TensorProductBasis{2}} where {N,NF,NQ,T}
+function quadrature(func,sign_condition,surface,box::IntervalBox{2},
+    quad1d::ReferenceQuadratureRule{NQ,T}) where {NQ,T}
 
-    s = sign(P,box)
+    s = sign(func,box)
     if s*sign_condition < 0
-        return QuadratureRule(T,2)
+        quad = TemporaryQuadrature(T,2)
+        return QuadratureRule(quad.points,quad.weights)
     elseif s*sign_condition > 0
-        return tensorProduct(quad1d, box)
+        return tensor_product(quad1d,box)
     else
-        height_dir = height_direction(P, box)
-        flag, gradient_sign = isSuitable(height_dir,P,box)
-        if gradient_sign == 0
-            throw(MethodError("Subdivision not implemented yet"))
+        height_dir = height_direction(func,box)
+        flag, gradient_sign = is_suitable(height_dir,func,box)
+        @assert gradient_sign != 0 "Subdivision not implemented yet"
+
+        lower(x) = func(extend(x,height_dir,box[height_dir].lo))
+        upper(x) = func(extend(x,height_dir,box[height_dir].hi))
+
+        lower_sign = sign(gradient_sign,sign_condition,surface,-1)
+        upper_sign = sign(gradient_sign,sign_condition,surface,+1)
+
+        lower_box = height_dir == 1 ? box[2] : box[1]
+        quad = quadrature([lower,upper], [lower_sign,upper_sign],
+            lower_box, quad1d)
+
+        if surface
+            newquad = surface_quadrature(func,height_dir,box[height_dir],
+                        quad.points,quad.weights)
+            return QuadratureRule(newquad.points,newquad.weights)
         else
-            lower(x) = P(extend(x,height_dir,box[height_dir].lo))
-            upper(x) = P(extend(x,height_dir,box[height_dir].hi))
-            lower_sign = sign(gradient_sign,sign_condition,surface,-1)
-            upper_sign = sign(gradient_sign,sign_condition,surface,+1)
-            lower_box = height_dir == 1 ? box[2] : box[1]
-            quad = quadrature([lower, upper], [lower_sign, upper_sign], lower_box, quad1d)
-            if surface
-                return surface_quadrature(P, height_dir, box[height_dir], quad.points, quad.weights)
-            else
-                return quadrature([P], [sign_condition], height_dir, box[height_dir], quad.points, quad.weights, quad1d)
-            end
+            newquad = quadrature([func],[sign_condition],height_dir,
+                        box[height_dir],quad.points,quad.weights,quad1d)
+            return QuadratureRule(newquad.points,newquad.weights)
         end
     end
 end

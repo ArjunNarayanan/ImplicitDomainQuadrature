@@ -64,7 +64,7 @@ end
 @inline zeroBox(N) = IntervalBox(0..0, N)
 @inline symBox(N) = IntervalBox(-1..1, N)
 
-function normalizedTaylorN(order::Int, box::IntervalBox{N}) where {N}
+function normalizedTaylorN(order::Z, box::IntervalBox{N}) where {Z<:Integer,N}
     zBoxN = zeroBox(N)
     sBoxN = symBox(N)
     x0 = mid(box)
@@ -74,7 +74,7 @@ function normalizedTaylorN(order::Int, box::IntervalBox{N}) where {N}
     return [TaylorModelN(xi_norm, 0..0, zBoxN, sBoxN) for xi_norm in xnorm], sBoxN
 end
 
-function bound(f, box::IntervalBox, order::Int)
+function bound(f, box::IntervalBox, order::Z) where {Z<:Integer}
     tm, sBoxN = normalizedTaylorN(order, box)
     ftm = f(tm...)
     return evaluate(ftm, sBoxN)
@@ -117,7 +117,7 @@ end
     run_search(f, interval, algorithm, tol, order)
 run a `BranchAndPrune` search until the sign of `f` in the given interval is determined
 """
-function run_search(f, interval::IntervalBox, order::Int, tol::Float64)
+function run_search(f,interval::IntervalBox,order,tol)
 
     search = SignSearch(f, interval, order, tol)
     local endtree = nothing
@@ -134,7 +134,7 @@ return
 - `-1` if `f` is uniformly negative on `int`
 - `0` if `f` has at least one zero crossing in `int` (f assumed continuous)
 """
-function Base.sign(f, int::IntervalBox, order::Int, tol::Float64)
+function Base.sign(f,int::IntervalBox; order = 5, tol = 1e-2)
     tree, search = run_search(f,int,order,tol)
     if search.found_positive && search.found_negative
         return 0
@@ -147,7 +147,7 @@ function Base.sign(f, int::IntervalBox, order::Int, tol::Float64)
     end
 end
 
-function extremal_coeffs_in_box(P::InterpolatingPolynomial{1}, box::IntervalBox)
+function extremal_coeffs_in_box(P::InterpolatingPolynomial{1},box::IntervalBox)
 
     max_coeff = -Inf
     min_coeff = Inf
@@ -168,12 +168,13 @@ end
     Base.sign(P::InterpolatingPolynomial{1}, int::IntervalBox; algorithm = :TaylorModels, tol = 1e-3, order = 5)
 special function for an interpolating polynomial type.
 """
-function Base.sign(P::InterpolatingPolynomial{1,NF,B,T}, int::IntervalBox; tol::Float64 = 1e-2, order::Int = 5) where {B<:TensorProductBasis{D,S}} where {S<:LagrangePolynomialBasis} where {NF,T,D}
+function Base.sign(P::InterpolatingPolynomial{1},
+    int::IntervalBox; tol = 1e-2, order = 5)
 
     max_coeff, min_coeff = extremal_coeffs_in_box(P,int)
     if !isinf(max_coeff) && !isinf(min_coeff) && max_coeff > 0 && min_coeff < 0
         return 0
     else
-        return sign((x...) -> P(x...), int, order, tol)
+        return sign((x...) -> P(x...), int, order = order, tol = tol)
     end
 end
