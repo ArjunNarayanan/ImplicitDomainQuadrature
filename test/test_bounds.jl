@@ -28,58 +28,58 @@ box = IntervalBox(0..1,0..2,0..5)
 @test IDQ.symBox(3) == IntervalBox(-1..1,3)
 
 set_variables(Float64, "x", order = 4, numvars = 1)
-f(x) = x + 1
+f(x) = x[1] + 1
 box = IntervalBox(-1..1,1)
-@test IDQ.bound(f, box, 1) == 0..2
-@test IDQ.bound(f, box, 2) == 0..2
+@test all(IDQ.bound(f, box, 1) .== 0..2)
+@test all(IDQ.bound(f, box, 2) .== 0..2)
 box = IntervalBox(0.5 .. 0.6, 1)
-@test IDQ.bound(f, box, 1) == f(box)[1]
+@test all(IDQ.bound(f, box, 1) .== f(box)[1])
 
 box = IntervalBox(-1..1,1)
 @test_throws ErrorException IDQ.taylor_models_sign_search(f,box,1,1e-2)
 
-f(x) = x + 2
+f(x) = x[1] + 2
 box = IntervalBox(-1..1,1)
 @test IDQ.taylor_models_sign_search(f, box, 1, 1e-2) == 1
 
-f(x) = x - 2
+f(x) = x[1] - 2
 box = IntervalBox(-1..1,1)
 @test IDQ.taylor_models_sign_search(f, box, 1, 1e-2) == -1
 
-f(x) = x
+f(x) = x[1]
 box = IntervalBox(-1..1,1)
 @test IDQ.taylor_models_sign_search(f,box,1,1e-2) == 0
 
 box = IntervalBox(-1..1,1)
 @test sign(f, box, order = 1, tol = 1e-2) == 0
-f(x) = x*(x - 0.1)*(x - 1.0)
+f(x) = x[1]*(x[1] - 0.1)*(x[1] - 1.0)
 @test sign(f, box, order = 1, tol = 1e-2) == 0
 
-f(x) = (x - 0.5)*(x+0.5) + 10
+f(x) = (x[1] - 0.5)*(x[1] + 0.5) + 10
 box = IntervalBox(-1..1,1)
 @test sign(f, box, order = 1, tol = 1e-2) == 1
 
-f(x) = (x - 0.5)*(x+0.5) - 3
+f(x) = (x[1] - 0.5) * (x[1] + 0.5) - 3
 box = IntervalBox(-1..1,1)
 @test sign(f, box, order = 1, tol = 1e-2) == -1
 
-f(x) = x*(x - 1e-4)
+f(x) = x[1] * (x[1] - 1e-4)
 box = IntervalBox(-1..1,1)
 @test_throws ErrorException sign(f, box, order = 1, tol = 1e-2)
 
 box = IntervalBox(2 .. 3,1)
-g(x) = (x - 2.5)*(x - 2.6)*(x - 2.9)
+g(x) = (x[1] - 2.5)*(x[1] - 2.6).*(x[1] - 2.9)
 orders = 1:10
 s = [sign(g,box, order = i, tol = 1e-2) for i in orders]
 @test all(i -> s[i] == 0, 1:length(orders))
 
 r = 0.5
-f2(x,y) = x^2 + y^2 - r^2
+f2(x) = x[1]^2 + x[2]^2 - r^2
 box = IntervalBox(-1..1,2)
 s = [sign(f2,box, order = i, tol = 1e-2) for i in orders]
 @test all(i -> s[i] == 0, 1:length(orders))
 
-g2(x,y) = sin(2pi*x)*cos(2pi*y) + 2
+g2(x) = sin(2pi*x[1])*cos(2pi*x[2]) + 2
 box = IntervalBox(-1..1,2)
 s = [sign(g2,box, order = i, tol = 1e-2) for i in orders]
 @test all(i -> s[i] == 1, 1:length(orders))

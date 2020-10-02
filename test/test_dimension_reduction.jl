@@ -1,6 +1,7 @@
 using Test
 using PolynomialBasis
 using IntervalRootFinding
+using Roots
 using IntervalArithmetic
 # using Revise
 using ImplicitDomainQuadrature
@@ -12,11 +13,6 @@ function allapprox(v1,v2;tol=1e-14)
     flags = [isapprox(v1[i],v2[i],atol=tol) for i = 1:length(v1)]
     return all(flags)
 end
-
-
-rootint = IDQ.unique_root_intervals(sin,0.0,2pi)
-r = IDQ.unique_roots(sin,0.,2pi)
-# @test_throws AssertionError IDQ.unique_root_intervals(sin,0.0,2pi)
 
 r = sort!(IDQ.unique_root_intervals(sin, pi/2, 5pi/2))
 @test length(r) == 2

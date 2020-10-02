@@ -1,6 +1,5 @@
 function unique_root_intervals(f, x1, x2)
     all_roots = roots(f, Interval(x1, x2))
-    # @assert all([r.status == :unique for r in all_roots])
     return [r.interval for r in all_roots]
 end
 
@@ -230,11 +229,21 @@ function height_direction(func,box::IntervalBox)
     return height_direction(func,mid(box))
 end
 
-function is_suitable(height_dir,func,box;order=5,tol=1e-3)
+function curvature_measure(grad,k,C)
+    return sum(grad.^2) - C^2*grad[k]^2
+end
 
-    gradf(x...) = gradient(func,height_dir,x...)
-    s = sign(gradf,box,order=order,tol=tol)
-    flag = s == 0 ? false : true
+function is_suitable(height_dir,func,box;order=5,tol=1e-3,C=4)
+
+    gradf(x) = gradient(func,x)
+    s = sign(x->gradf(x)[height_dir],box,order=order,tol=tol)
+    curvatureflag = true
+    if s != 0
+        curve(x) = curvature_measure(gradf(x),height_dir,C)
+        t = sign(curve,box,order=order,tol=tol)
+        curvatureflag = t == -1 ? false : true
+    end
+    flag = (s == 0 || curvatureflag) ? false : true
     return flag, s
 
 end

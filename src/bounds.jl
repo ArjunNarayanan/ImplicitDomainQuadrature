@@ -37,7 +37,7 @@ end
 
 function bound(f, box, order)
     tm, sBoxN = normalizedTaylorN(order, box)
-    ftm = f(tm...)
+    ftm = f(tm)
     return evaluate(ftm, sBoxN)
 end
 
@@ -49,6 +49,7 @@ function taylor_models_sign_search(func,initialbox::IntervalBox{N,T},order,tol) 
     foundpos = foundneg = breachedtol = false
     queue = [initialbox]
 
+    counter = 1
     while !isempty(queue)
         if (foundpos && foundneg)
             break
@@ -67,6 +68,7 @@ function taylor_models_sign_search(func,initialbox::IntervalBox{N,T},order,tol) 
                 newboxes = split_box(box)
                 push!(queue,newboxes...)
             end
+            counter += 1
         end
     end
 
@@ -90,7 +92,7 @@ return
 - `-1` if `f` is uniformly negative on `int`
 - `0` if `f` has at least one zero crossing in `int` (f assumed continuous)
 """
-function Base.sign(func,box;order = 5, tol = 1e-5)
+function Base.sign(func,box;order = 5, tol = 1e-2)
     return taylor_models_sign_search(func,box,order,tol)
 end
 
