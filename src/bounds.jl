@@ -92,7 +92,7 @@ return
 - `-1` if `f` is uniformly negative on `int`
 - `0` if `f` has at least one zero crossing in `int` (f assumed continuous)
 """
-function Base.sign(func,box;order = 5, tol = 1e-2)
+function Base.sign(func,box;order = 5, tol = 1e-3)
     return taylor_models_sign_search(func,box,order,tol)
 end
 
