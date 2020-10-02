@@ -1,70 +1,31 @@
-"""
-    SignSearch{N,T} <: AbstractBreadthFirstSearch{IntervalBox{N,T}}
-a `BranchAndPrune` search type that is used to determine the sign of
-a function over a given interval
-"""
-mutable struct SignSearch{N,T} <: AbstractBreadthFirstSearch{IntervalBox{N,T}}
-    f
-    initial::IntervalBox{N,T}
-    tol::T
-    found_positive::Bool
-    found_negative::Bool
-    breached_tolerance::Bool
-    order::Int
-    function SignSearch(f, initial::IntervalBox{N,T}, order::Int, tol::Real) where {N,T}
-
-        if tol <= 0
-            throw(ArgumentError("Tolerance must be a positive number, got $tol"))
-        end
-        if order < 1
-            throw(ArgumentError("Order must be > 0, got $order"))
-        end
-        set_variables(T, "x", order = 2order, numvars = N)
-        relative_tolerance = tol*diam(initial)
-        new{N,T}(f,initial,relative_tolerance,false,false,false,order)
-    end
+function corners(box::IntervalBox{2,T}) where {T}
+    xL = [box[1].lo,box[2].lo]
+    xR = [box[1].hi,box[2].hi]
+    return xL,xR
 end
 
-"""
-    min_diam(box::IntervalBox)
-return the minimum diameter of `box`
-"""
-function min_diam(box::IntervalBox)
+function split_box(box::IntervalBox{1,T}) where {T}
+    return bisect(box,0.5)
+end
+
+function split_box(box::IntervalBox{2,T}) where {T}
+    xL,xR = corners(box)
+    xM = 0.5*(xL+xR)
+    b1 = IntervalBox(xL,xM)
+    b2 = IntervalBox([xM[1],xL[2]],[xR[1],xM[2]])
+    b3 = IntervalBox(xM,xR)
+    b4 = IntervalBox([xL[1],xM[2]],[xM[1],xR[2]])
+    return b1,b2,b3,b4
+end
+
+function min_diam(box)
     return minimum(diam.(box))
-end
-
-function Base.muladd(a::TaylorModelN{N,Interval{T},T}, b::T, c::T) where {N,T<:Real}
-    return a*b + c
-end
-
-function Base.muladd(a::T, b::TaylorModelN{N,Interval{T},T}, c::T) where {N,T<:Real}
-    return a*b + c
-end
-
-function Base.muladd(a::T, b::T, c::TaylorModelN{N,Interval{T},T}) where {N,T<:Real}
-    return a*b + c
-end
-
-function Base.muladd(a::TaylorModelN{N,Interval{T},T}, b::TaylorModelN{N,Interval{T},T}, c::T) where {N,T<:Real}
-    return a*b + c
-end
-
-function Base.muladd(a::TaylorModelN{N,Interval{T},T}, b::T, c::TaylorModelN{N,Interval{T},T}) where {N,T<:Real}
-    return a*b + c
-end
-
-function Base.muladd(a::T, b::TaylorModelN{N,Interval{T},T}, c::TaylorModelN{N,Interval{T},T}) where {N,T<:Real}
-    return a*b + c
-end
-
-function Base.muladd(a::TaylorModelN{N,Interval{T},T}, b::TaylorModelN{N,Interval{T},T}, c::TaylorModelN{N,Interval{T},T}) where {N,T<:Real}
-    return a*b + c
 end
 
 @inline zeroBox(N) = IntervalBox(0..0, N)
 @inline symBox(N) = IntervalBox(-1..1, N)
 
-function normalizedTaylorN(order::Z, box::IntervalBox{N}) where {Z<:Integer,N}
+function normalizedTaylorN(order, box::IntervalBox{N,T}) where {N,T}
     zBoxN = zeroBox(N)
     sBoxN = symBox(N)
     x0 = mid(box)
@@ -74,89 +35,75 @@ function normalizedTaylorN(order::Z, box::IntervalBox{N}) where {Z<:Integer,N}
     return [TaylorModelN(xi_norm, 0..0, zBoxN, sBoxN) for xi_norm in xnorm], sBoxN
 end
 
-function bound(f, box::IntervalBox, order::Z) where {Z<:Integer}
+function bound(f, box, order)
     tm, sBoxN = normalizedTaylorN(order, box)
     ftm = f(tm...)
     return evaluate(ftm, sBoxN)
 end
 
-"""
-    BranchAndPrune.process(search::SignSearch, interval::IntervalBox)
-process the given `interval` to determine the sign of `search.f` in this interval
-"""
-function BranchAndPrune.process(search::SignSearch, interval::IntervalBox)
+function taylor_models_sign_search(func,initialbox::IntervalBox{N,T},order,tol) where {N,T}
 
-    f_range = bound(search.f, interval, search.order)
+    set_variables(T, "x", order = 2order, numvars = N)
+    rtol = tol*diam(initialbox)
 
-    if (search.found_positive && search.found_negative) || (search.breached_tolerance)
-        return :discard, interval
-    elseif inf(f_range) > 0.0
-        search.found_positive = true
-        return :store, interval
-    elseif sup(f_range) < 0.0
-        search.found_negative = true
-        return :store, interval
-    elseif min_diam(interval) < search.tol
-        search.breached_tolerance = true
-        return :discard, interval
+    foundpos = foundneg = breachedtol = false
+    queue = [initialbox]
+
+    while !isempty(queue)
+        if (foundpos && foundneg)
+            break
+        else
+            box = popfirst!(queue)
+            if min_diam(box) < rtol
+                breachedtol = true
+                break
+            end
+            funcrange = bound(func,box,order)
+            if inf(funcrange) > 0.0
+                foundpos = true
+            elseif sup(funcrange) < 0.0
+                foundneg = true
+            else
+                newboxes = split_box(box)
+                push!(queue,newboxes...)
+            end
+        end
+    end
+
+    if breachedtol
+        error("Bisection reduced interval size below tolerance.")
+    elseif foundpos && foundneg
+        return 0
+    elseif foundpos && !foundneg
+        return +1
+    elseif !foundpos && foundneg
+        return -1
     else
-        return :bisect, interval
+        error("Unexpected scenario")
     end
 end
 
 """
-    BranchAndPrune.bisect(::SignSearch, interval::IntervalBox)
-split the given `interval` along its largest dimension
-"""
-function BranchAndPrune.bisect(::SignSearch, interval::IntervalBox)
-    idx = argmax(diam.(interval))
-    return bisect(interval,idx,0.5)
-end
-
-"""
-    run_search(f, interval, algorithm, tol, order)
-run a `BranchAndPrune` search until the sign of `f` in the given interval is determined
-"""
-function run_search(f,interval::IntervalBox,order,tol)
-
-    search = SignSearch(f, interval, order, tol)
-    local endtree = nothing
-    for working_tree in search
-        endtree = working_tree
-    end
-    return endtree, search
-end
-
-"""
-    sign(f, int::Interval)
+    sign(f, box)
 return
 - `+1` if `f` is uniformly positive on `int`
 - `-1` if `f` is uniformly negative on `int`
 - `0` if `f` has at least one zero crossing in `int` (f assumed continuous)
 """
-function Base.sign(f,int::IntervalBox; order = 5, tol = 1e-2)
-    tree, search = run_search(f,int,order,tol)
-    if search.found_positive && search.found_negative
-        return 0
-    elseif search.breached_tolerance
-        throw(ArgumentError("Bisection reduced interval size below tolerance. Reduce tolerance or increase the order of the method"))
-    elseif search.found_positive
-        return 1
-    else
-        return -1
-    end
+function Base.sign(func,box;order = 5, tol = 1e-5)
+    return taylor_models_sign_search(func,box,order,tol)
 end
 
-function extremal_coeffs_in_box(P::InterpolatingPolynomial{1},box::IntervalBox)
+function extremal_coeffs_in_box(poly,box)
 
     max_coeff = -Inf
     min_coeff = Inf
-    points = P.basis.points
+    points = poly.basis.points
     dim,npoints = size(points)
     for i in 1:npoints
         p = view(points,:,i)
         if p in box
-            coeff = P.coeffs[i]
+            coeff = poly.coeffs[i]
             min_coeff = min(min_coeff,coeff)
             max_coeff = max(max_coeff,coeff)
         end
@@ -168,11 +115,10 @@ end
     Base.sign(P::InterpolatingPolynomial{1}, int::IntervalBox; algorithm = :TaylorModels, tol = 1e-3, order = 5)
 special function for an interpolating polynomial type.
 """
-function Base.sign(P::InterpolatingPolynomial{1},
-    int::IntervalBox; tol = 1e-2, order = 5)
+function Base.sign(P::InterpolatingPolynomial{1},int; tol = 1e-2, order = 5)
 
     max_coeff, min_coeff = extremal_coeffs_in_box(P,int)
-    if !isinf(max_coeff) && !isinf(min_coeff) && max_coeff > 0 && min_coeff < 0
+    if max_coeff > 0 && min_coeff < 0
         return 0
     else
         return sign((x...) -> P(x...), int, order = order, tol = tol)

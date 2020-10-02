@@ -4,7 +4,6 @@ authors = ["Arjun Narayanan"]
 version = "0.1.0"
 
 [deps]
-BranchAndPrune = "d3bc4f2e-91e6-11e9-365e-cd067da536ce"
 FastGaussQuadrature = "442a2c76-b920-505d-bb47-c5924d526838"
 IntervalRootFinding = "d2bf35a9-74e0-55ec-b149-d360ff49b807"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"

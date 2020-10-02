@@ -2,49 +2,27 @@ using Test
 using PolynomialBasis
 using IntervalArithmetic
 using TaylorModels
-using BranchAndPrune
 # using Revise
 using ImplicitDomainQuadrature
-
 IDQ = ImplicitDomainQuadrature
 
-f(x) = x*(0.1 - x)*(1.0 - x)
-box = IntervalBox(-1..1,1)
-@test_throws ArgumentError IDQ.SignSearch(f, box, +1, -1e-2)
-@test_throws ArgumentError IDQ.SignSearch(f, box, -1, 1e-3)
+box = IntervalBox([1.,2],[3.,5.])
+xL,xR = IDQ.corners(box)
+@test all(xL .≈ [1.,2.])
+@test all(xR .≈ [3.,5.])
 
-box = IntervalBox(-1..1,3)
-search = IDQ.SignSearch(f, box, +5, 1e-2)
-@test length(get_variables()) == 3
-@test get_order() == 10
-
-box = IntervalBox(-1..1,1)
-search = IDQ.SignSearch(f, box, 1, 1e-2)
-@test search.tol ≈ 2*1e-2
-@test search.initial == box
-@test search.found_positive == false
-@test search.found_negative == false
-@test search.breached_tolerance == false
-@test search.order == 1
+b1,b2,b3,b4 = IDQ.split_box(box)
+testb1 = IntervalBox([1.,2],[2,3.5])
+testb2 = IntervalBox([2.,2],[3,3.5])
+testb3 = IntervalBox([2.,3.5],[3.,5])
+testb4 = IntervalBox([1.,3.5],[2,5.])
+@test b1 == testb1
+@test b2 == testb2
+@test b3 == testb3
+@test b4 == testb4
 
 box = IntervalBox(0..1,0..2,0..5)
 @test IDQ.min_diam(box) ≈ 1.0
-
-set_variables(Float64, "x", order = 2, numvars = 2)
-box = IntervalBox(-1..1,2)
-x0 = IntervalBox(mid(box))
-tm = TaylorModelN(1,1,x0,box)
-a = 5.0
-b = 2.0
-@test muladd(tm,a,b) == a*tm + b
-@test muladd(a,tm,b) == a*tm + b
-@test muladd(tm,tm,b) == tm*tm + b
-@test muladd(a,b,tm) == a*b+tm
-tm1 = TaylorModelN(1,1,x0,box)
-tm2 = TaylorModelN(1,1,x0,box)
-tm3 = TaylorModelN(1,1,x0,box)
-@test muladd(tm1,a,tm2) == a*tm1 + tm2
-@test muladd(tm1,tm2,tm3) == tm1*tm2 + tm3
 
 @test IDQ.zeroBox(2) == IntervalBox(0..0,2)
 @test IDQ.symBox(3) == IntervalBox(-1..1,3)
@@ -58,62 +36,19 @@ box = IntervalBox(0.5 .. 0.6, 1)
 @test IDQ.bound(f, box, 1) == f(box)[1]
 
 box = IntervalBox(-1..1,1)
-search = IDQ.SignSearch(f, box, 1, 1e-2)
-search.found_positive = true
-search.found_negative = true
-@test BranchAndPrune.process(search, box) == (:discard, box)
-
-search = IDQ.SignSearch(f, box, 1, 1e-2)
-search.breached_tolerance = true
-@test BranchAndPrune.process(search,box) == (:discard, box)
+@test_throws ErrorException IDQ.taylor_models_sign_search(f,box,1,1e-2)
 
 f(x) = x + 2
 box = IntervalBox(-1..1,1)
-search = IDQ.SignSearch(f, box, 1, 1e-2)
-@test BranchAndPrune.process(search,box) == (:store, box)
-@test search.found_positive == true
-@test search.found_negative == false
-@test search.breached_tolerance == false
+@test IDQ.taylor_models_sign_search(f, box, 1, 1e-2) == 1
 
 f(x) = x - 2
 box = IntervalBox(-1..1,1)
-search = IDQ.SignSearch(f, box, 1, 1e-2)
-@test BranchAndPrune.process(search,box) == (:store, box)
-@test search.found_positive == false
-@test search.found_negative == true
-@test search.breached_tolerance == false
+@test IDQ.taylor_models_sign_search(f, box, 1, 1e-2) == -1
 
 f(x) = x
 box = IntervalBox(-1..1,1)
-search = IDQ.SignSearch(f, box, 1, 1e-2)
-sbox = IntervalBox(0..1e-3,1)
-@test BranchAndPrune.process(search,sbox) == (:discard, sbox)
-@test search.found_positive == false
-@test search.found_negative == false
-@test search.breached_tolerance == true
-
-f(x) = x
-box = IntervalBox(-1..1,1)
-search = IDQ.SignSearch(f, box, 1, 1e-2)
-@test BranchAndPrune.process(search,box) == (:bisect, box)
-@test search.found_positive == false
-@test search.found_negative == false
-@test search.breached_tolerance == false
-
-box = IntervalBox(0..1,0..2)
-b1,b2 = BranchAndPrune.bisect(search, box)
-@test all(i -> b1[i] ≈ IntervalBox(0..1,0..1)[i], 1:2)
-@test all(i -> b2[i] ≈ IntervalBox(0..1,1..2)[i], 1:2)
-
-box = IntervalBox(-1..1,1)
-f(x) = x
-tree, search = IDQ.run_search(f, box, 1, 1e-2)
-boxes = data(tree)
-@test IntervalBox(0.5 .. 1,1) in boxes
-@test IntervalBox(-1 .. -0.5,1) in boxes
-@test search.found_positive == true
-@test search.found_negative == true
-@test search.breached_tolerance == false
+@test IDQ.taylor_models_sign_search(f,box,1,1e-2) == 0
 
 box = IntervalBox(-1..1,1)
 @test sign(f, box, order = 1, tol = 1e-2) == 0
@@ -130,7 +65,7 @@ box = IntervalBox(-1..1,1)
 
 f(x) = x*(x - 1e-4)
 box = IntervalBox(-1..1,1)
-@test_throws ArgumentError sign(f, box, order = 1, tol = 1e-2)
+@test_throws ErrorException sign(f, box, order = 1, tol = 1e-2)
 
 box = IntervalBox(2 .. 3,1)
 g(x) = (x - 2.5)*(x - 2.6)*(x - 2.9)
