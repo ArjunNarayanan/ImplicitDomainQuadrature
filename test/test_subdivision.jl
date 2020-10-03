@@ -19,23 +19,31 @@ function circle_distance_function(coords,center,radius)
     return [norm(coords[:,i] - center) - radius for i = 1:npts]
 end
 
+function plane_distance_function(coords,normal,x0)
+    return (coords .- x0)'*normal
+end
+
 function plot_zero_levelset(poly)
     x = -1:1e-2:1
     contour(x,x,(x,y) -> poly(x,y), levels = [0.])
 end
 
-radius = 1.0
+radius = 1.2
 circcenter = [radius,0.0]
 poly = InterpolatingPolynomial(1,2,2)
-coeffs = circle_distance_function(poly.basis.points,circcenter,radius)
+# coeffs = circle_distance_function(poly.basis.points,circcenter,radius)
+x0 = [-1.,0.]
+coeffs = plane_distance_function(poly.basis.points,[1.,0.],x0)
 update!(poly,coeffs)
-plot_zero_levelset(poly)
 
 box = IntervalBox(-1..1,2)
 # IDQ.is_suitable(1,poly,box)
 
-quad1d = IDQ.ReferenceQuadratureRule(5)
-quad = IDQ.area_quadrature(poly,-1,box,quad1d)
+quad1d = IDQ.ReferenceQuadratureRule(2)
+quad = IDQ.area_quadrature(poly,+1,box,quad1d)
+
+
+plot_zero_levelset(poly)
 scatter!(quad.points[1,:],quad.points[2,:],legend=false)
 
 # testp = [0.,0.]

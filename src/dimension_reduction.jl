@@ -18,7 +18,7 @@ function roots_and_ends(F, x1, x2)
         roots = unique_roots(f, x1, x2)
         append!(r, roots)
     end
-    return sort!(r)
+    return unique!(sort!(r))
 end
 
 function extend(x0::T, k, x) where {T<:Number}
@@ -346,54 +346,61 @@ function area_quadrature(
     func,
     sign_condition,
     box,
-    quad1d,
+    quad1d::ReferenceQuadratureRule{NQ,T},
     recursionlevel,
     maxlevels,
-)
+) where {NQ,T}
 
     if recursionlevel == maxlevels
         xc = reshape(mid(box), 2, 1)
         wt = [area(box)]
         return TemporaryQuadrature(xc, wt)
     else
-        heightdir = height_direction(func, box)
-        flag, gradsign = is_suitable(heightdir, func, box)
-        if !flag
-            splitboxes = split_box(box)
-            splitquads = [area_quadrature(
-                func,
-                sign_condition,
-                sb,
-                quad1d,
-                recursionlevel + 1,
-                maxlevels,
-            ) for sb in splitboxes]
-            return combine(splitquads)
+        s = sign(func,box)
+        if s*sign_condition < 0
+            return TemporaryQuadrature(T,2)
+        elseif s * sign_condition > 0
+            return tensor_product(quad1d,box)
         else
-            lower(x) = func(extend(x, heightdir, box[heightdir].lo))
-            upper(x) = func(extend(x, heightdir, box[heightdir].hi))
+            heightdir = height_direction(func, box)
+            flag, gradsign = is_suitable(heightdir, func, box)
+            if !flag
+                splitboxes = split_box(box)
+                splitquads = [area_quadrature(
+                    func,
+                    sign_condition,
+                    sb,
+                    quad1d,
+                    recursionlevel + 1,
+                    maxlevels,
+                ) for sb in splitboxes]
+                return combine(splitquads)
+            else
+                lower(x) = func(extend(x, heightdir, box[heightdir].lo))
+                upper(x) = func(extend(x, heightdir, box[heightdir].hi))
 
-            lowersign = sign(gradsign, sign_condition, false, -1)
-            uppersign = sign(gradsign, sign_condition, false, +1)
+                lowersign = sign(gradsign, sign_condition, false, -1)
+                uppersign = sign(gradsign, sign_condition, false, +1)
 
-            lowerbox = heightdir == 1 ? box[2] : box[1]
+                lowerbox = heightdir == 1 ? box[2] : box[1]
 
-            edgequad = one_dimensional_quadrature(
-                [lower, upper],
-                [lowersign, uppersign],
-                lowerbox,
-                quad1d,
-            )
+                edgequad = one_dimensional_quadrature(
+                    [lower, upper],
+                    [lowersign, uppersign],
+                    lowerbox,
+                    quad1d,
+                )
 
-            return extended_one_dimensional_quadrature(
-                [func],
-                [sign_condition],
-                heightdir,
-                box[heightdir],
-                edgequad.points,
-                edgequad.weights,
-                quad1d,
-            )
+                return extended_one_dimensional_quadrature(
+                    [func],
+                    [sign_condition],
+                    heightdir,
+                    box[heightdir],
+                    edgequad.points,
+                    edgequad.weights,
+                    quad1d,
+                )
+            end
         end
     end
 end
