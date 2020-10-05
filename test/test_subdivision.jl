@@ -14,46 +14,113 @@ function allapprox(v1, v2; tol = 1e-14)
     return all(flags)
 end
 
-function circle_distance_function(coords,center,radius)
+function circle_distance_function(coords, center, radius)
     npts = size(coords)[2]
-    return [norm(coords[:,i] - center) - radius for i = 1:npts]
+    return [norm(coords[:, i] - center) - radius for i = 1:npts]
 end
 
-function plane_distance_function(coords,normal,x0)
-    return (coords .- x0)'*normal
+function plane_distance_function(coords, normal, x0)
+    return (coords .- x0)' * normal
 end
 
 function plot_zero_levelset(poly)
     x = -1:1e-2:1
-    contour(x,x,(x,y) -> poly(x,y), levels = [0.])
+    contour(x, x, (x, y) -> poly(x, y), levels = [0.0])
 end
 
-radius = 1.2
-circcenter = [radius,0.0]
-poly = InterpolatingPolynomial(1,2,2)
-# coeffs = circle_distance_function(poly.basis.points,circcenter,radius)
-x0 = [-1.,0.]
-coeffs = plane_distance_function(poly.basis.points,[1.,0.],x0)
-update!(poly,coeffs)
+struct FunctionAndGradient
+    func::Any
+    grad::Any
+    perturbation::Any
+end
 
-box = IntervalBox(-1..1,2)
-# IDQ.is_suitable(1,poly,box)
+function (f::FunctionAndGradient)(x)
+    return f.func(x) + perturbation
+end
 
+function PolynomialBasis.gradient(f::FunctionAndGradient, x)
+    return f.grad(x)
+end
+
+poly = InterpolatingPolynomial(1, 2, 2)
+x0 = [1.0, 0.0]
+normal = [1.0, 0.0]
+coeffs = plane_distance_function(poly.basis.points, normal, x0)
+update!(poly, coeffs)
+
+box = IntervalBox(-1..1, 2)
 quad1d = IDQ.ReferenceQuadratureRule(2)
-quad = IDQ.area_quadrature(poly,+1,box,quad1d)
+
+quad = IDQ.area_quadrature(poly, x -> gradient(poly, x), -1, box, quad1d)
+
+@test isapprox(sum(quad.weights), 4.0, atol = 5e-2)
+
+quad = IDQ.area_quadrature(poly, x -> gradient(poly, x), +1, box, quad1d)
+
+@test isapprox(sum(quad.weights), 0.0, atol = 5e-2)
+
+x0 = [1.0, 1.0]
+normal = [0.0, 1.0]
+coeffs = plane_distance_function(poly.basis.points, normal, x0)
+update!(poly, coeffs)
+
+quad = IDQ.area_quadrature(poly, x -> gradient(poly, x), +1, box, quad1d)
+
+@test isapprox(sum(quad.weights), 0.0, atol = 5e-2)
+
+quad = IDQ.area_quadrature(poly, x -> gradient(poly, x), -1, box, quad1d)
+
+@test isapprox(sum(quad.weights), 4.0, atol = 5e-2)
+
+x0 = [-1.0, 1.0]
+normal = [1.0, 0.0]
+coeffs = plane_distance_function(poly.basis.points, normal, x0)
+update!(poly, coeffs)
+
+quad = IDQ.area_quadrature(poly, x -> gradient(poly, x), +1, box, quad1d)
+
+@test isapprox(sum(quad.weights), 4.0, atol = 5e-2)
+
+quad = IDQ.area_quadrature(poly, x -> gradient(poly, x), -1, box, quad1d)
+
+@test isapprox(sum(quad.weights), 0.0, atol = 5e-2)
+
+x0 = [1.0, -1.0]
+normal = [0.0, 1.0]
+coeffs = plane_distance_function(poly.basis.points, normal, x0)
+update!(poly, coeffs)
+
+quad = IDQ.area_quadrature(poly, x -> gradient(poly, x), +1, box, quad1d)
+
+@test isapprox(sum(quad.weights), 4.0, atol = 5e-2)
+
+quad = IDQ.area_quadrature(poly, x -> gradient(poly, x), -1, box, quad1d)
+
+@test isapprox(sum(quad.weights), 0.0, atol = 5e-2)
 
 
-plot_zero_levelset(poly)
-scatter!(quad.points[1,:],quad.points[2,:],legend=false)
 
-# testp = [0.,0.]
-# testw = [4.0]
-# @test allapprox(quad.points,testp)
-# @test allapprox(quad.weights,testw)
+#######################################################################
+# Test a curved interface and subdivision
+try
+    sign(x->gradient(poly,x)[1],sb)
+catch e
+    if isa(e,IDQ.BisectionError)
+        println("I caught you BisectionError!")
+    else
+        throw(e)
+    end
+end
+
+
+
+
+# radius = 0.5
+# center = [0.0, 0.0]
+# coeffs = circle_distance_function(poly.basis.points, center, radius)
+# update!(poly, coeffs)
 #
-# quad = IDQ.area_quadrature(poly,+1,box,quad1d)
-# p,w = IDQ.transform(quad1d, 0.0, 1.0)
-# p2 = hcat([IDQ.extend([quad1d.points[i]], 2, p) for i in 1:5]...)
-# w2 = vcat([quad1d.weights[i]*w for i in 1:5]...)
-# @test allapprox(quad.points,p2)
-# @test allapprox(quad.weights,w2)
+# quad = IDQ.area_quadrature(poly, x -> gradient(poly, x), +1, box, quad1d)
+#
+# plot_zero_levelset(poly)
+# scatter!(quad.points[1, :], quad.points[2, :], legend = false)

@@ -83,6 +83,18 @@ function QuadratureRule(quad::TemporaryQuadrature)
     return QuadratureRule(quad.points, quad.weights)
 end
 
+function temporary_tensor_product(
+    quad::ReferenceQuadratureRule,
+    box::IntervalBox{2},
+)
+
+    p1, w1 = transform(quad, box[1])
+    p2, w2 = transform(quad, box[2])
+    points = tensor_product_points(p1, p2)
+    weights = kron(w1, w2)
+    return TemporaryQuadrature(points, weights)
+end
+
 function update!(quad::TemporaryQuadrature, p::V, w) where {V<:AbstractVector}
     d = length(p)
     nw = length(w)
@@ -294,33 +306,38 @@ function surface_quadrature(func, height_dir, interval, x0, w0)
     )
 end
 
-function height_direction(func, xc)
-    grad = vec(gradient(func, xc))
-    @assert !(norm(grad) ≈ 0.0)
-    return argmax(abs.(grad))
+function height_direction(grad, xc)
+    grad = vec(grad(xc))
+    if norm(grad) ≈ 0.0
+        return 0
+    else
+        return argmax(abs.(grad))
+    end
 end
 
-function height_direction(func, box::IntervalBox{N,T}) where {N,T}
-    return height_direction(func, mid(box))
+function height_direction(grad, box::IntervalBox{N,T}) where {N,T}
+    return height_direction(grad, mid(box))
 end
 
 function curvature_measure(grad, k, C)
     return sum(grad .^ 2) - C^2 * grad[k]^2
 end
 
-function is_suitable(height_dir, func, box; order = 5, tol = 1e-3, C = 4)
+function is_suitable(height_dir, grad, box; order = 5, tol = 1e-3, C = 4)
 
-    gradf(x) = gradient(func, x)
-    s = sign(x -> gradf(x)[height_dir], box, order = order, tol = tol)
-    curvatureflag = true
-    if s != 0
-        curve(x) = curvature_measure(gradf(x), height_dir, C)
-        t = sign(curve, box, order = order, tol = tol)
-        curvatureflag = t == -1 ? false : true
+    if height_dir == 0
+        return false,0
+    else
+        s = sign(x -> grad(x)[height_dir], box, order = order, tol = tol)
+        curvatureflag = true
+        if s != 0
+            curve(x) = curvature_measure(grad(x), height_dir, C)
+            t = sign(curve, box, order = order, tol = tol)
+            curvatureflag = t == -1 ? false : true
+        end
+        flag = (s == 0 || curvatureflag) ? false : true
+        return flag, s
     end
-    flag = (s == 0 || curvatureflag) ? false : true
-    return flag, s
-
 end
 
 function Base.sign(m::Z, s::Z, S::Bool, sigma::Z) where {Z<:Integer}
@@ -332,7 +349,7 @@ function Base.sign(m::Z, s::Z, S::Bool, sigma::Z) where {Z<:Integer}
     end
 end
 
-function combine(splitquads::Vector{TemporaryQuadrature{T}}) where {T}
+function combine_quadratures(splitquads)
     points = hcat([sq.points for sq in splitquads]...)
     weights = vcat([sq.weights for sq in splitquads]...)
     return TemporaryQuadrature(points, weights)
@@ -342,126 +359,154 @@ function area(box::IntervalBox{2,T}) where {T}
     return prod([box[i].hi - box[i].lo for i = 1:2])
 end
 
-function area_quadrature(
+function cut_area_quadrature(
     func,
+    grad,
+    sign_condition,
+    box,
+    quad1d,
+    recursionlevel,
+    maxlevels,
+    perturbation,
+    numperturbation,
+    maxperturbations,
+)
+    heightdir = height_direction(grad, box)
+    issuitable, gradsign = is_suitable(heightdir, grad, box)
+    if !issuitable
+        splitboxes = split_box(box)
+        splitquads = [
+            subdivision_area_quadrature(
+                func,
+                grad,
+                sign_condition,
+                sb,
+                quad1d,
+                recursionlevel + 1,
+                maxlevels,
+                perturbation,
+                numperturbation,
+                maxperturbations,
+            ) for sb in splitboxes
+        ]
+        return combine_quadratures(splitquads)
+    else
+        lower(x) = func(extend(x, heightdir, box[heightdir].lo))
+        upper(x) = func(extend(x, heightdir, box[heightdir].hi))
+
+        lowersign = sign(gradsign, sign_condition, false, -1)
+        uppersign = sign(gradsign, sign_condition, false, +1)
+
+        lowerbox = heightdir == 1 ? box[2] : box[1]
+
+        edgequad = one_dimensional_quadrature(
+            [lower, upper],
+            [lowersign, uppersign],
+            lowerbox,
+            quad1d,
+        )
+
+        return extended_one_dimensional_quadrature(
+            [func],
+            [sign_condition],
+            heightdir,
+            box[heightdir],
+            edgequad.points,
+            edgequad.weights,
+            quad1d,
+        )
+    end
+end
+
+
+function subdivision_area_quadrature(
+    func,
+    grad,
     sign_condition,
     box,
     quad1d::ReferenceQuadratureRule{NQ,T},
     recursionlevel,
     maxlevels,
+    perturbation,
+    numperturbation,
+    maxperturbations,
 ) where {NQ,T}
+
+    @assert sign_condition == +1 || sign_condition == -1
 
     if recursionlevel == maxlevels
         xc = reshape(mid(box), 2, 1)
         wt = [area(box)]
         return TemporaryQuadrature(xc, wt)
     else
-        s = sign(func,box)
-        if s*sign_condition < 0
-            return TemporaryQuadrature(T,2)
-        elseif s * sign_condition > 0
-            return tensor_product(quad1d,box)
-        else
-            heightdir = height_direction(func, box)
-            flag, gradsign = is_suitable(heightdir, func, box)
-            if !flag
-                splitboxes = split_box(box)
-                splitquads = [area_quadrature(
-                    func,
-                    sign_condition,
-                    sb,
-                    quad1d,
-                    recursionlevel + 1,
-                    maxlevels,
-                ) for sb in splitboxes]
-                return combine(splitquads)
+        
+        s = 2
+        try
+            s = sign(func, box)
+        catch e
+            if numperturbation == maxperturbations
+                errorstr = "Failed to construct quadrature after $numperturbation perturbations of size $perturbation"
+                error(errorstr)
             else
-                lower(x) = func(extend(x, heightdir, box[heightdir].lo))
-                upper(x) = func(extend(x, heightdir, box[heightdir].hi))
-
-                lowersign = sign(gradsign, sign_condition, false, -1)
-                uppersign = sign(gradsign, sign_condition, false, +1)
-
-                lowerbox = heightdir == 1 ? box[2] : box[1]
-
-                edgequad = one_dimensional_quadrature(
-                    [lower, upper],
-                    [lowersign, uppersign],
-                    lowerbox,
+                return subdivision_area_quadrature(
+                    x -> func(x) + perturbation,
+                    grad,
+                    sign_condition,
+                    box,
                     quad1d,
-                )
-
-                return extended_one_dimensional_quadrature(
-                    [func],
-                    [sign_condition],
-                    heightdir,
-                    box[heightdir],
-                    edgequad.points,
-                    edgequad.weights,
-                    quad1d,
+                    recursionlevel,
+                    maxlevels,
+                    perturbation,
+                    numperturbation + 1,
+                    maxperturbations,
                 )
             end
         end
-    end
-end
 
-function area_quadrature(func,sign_condition,box,quad1d;maxlevels = 5)
-    return area_quadrature(func,sign_condition,box,quad1d,1,maxlevels)
-end
+        @assert s == -1 || s == 0 || s == 1
 
-function quadrature(
-    func,
-    sign_condition,
-    surface,
-    box::IntervalBox{2},
-    quad1d::ReferenceQuadratureRule{NQ,T},
-) where {NQ,T}
-
-    s = sign(func, box)
-    if s * sign_condition < 0
-        quad = TemporaryQuadrature(T, 2)
-        return QuadratureRule(quad.points, quad.weights)
-    elseif s * sign_condition > 0
-        return tensor_product(quad1d, box)
-    else
-        height_dir = height_direction(func, box)
-        flag, gradient_sign = is_suitable(height_dir, func, box)
-        @assert gradient_sign != 0 "Subdivision not implemented yet"
-
-        lower(x) = func(extend(x, height_dir, box[height_dir].lo))
-        upper(x) = func(extend(x, height_dir, box[height_dir].hi))
-
-        lower_sign = sign(gradient_sign, sign_condition, surface, -1)
-        upper_sign = sign(gradient_sign, sign_condition, surface, +1)
-
-        lower_box = height_dir == 1 ? box[2] : box[1]
-        quad = quadrature(
-            [lower, upper],
-            [lower_sign, upper_sign],
-            lower_box,
-            quad1d,
-        )
-
-        if surface
-            newquad = surface_quadrature(
-                func,
-                height_dir,
-                box[height_dir],
-                quad.points,
-                quad.weights,
-            )
-            return QuadratureRule(newquad.points, newquad.weights)
+        if s * sign_condition < 0
+            return TemporaryQuadrature(T, 2)
+        elseif s * sign_condition > 0
+            return temporary_tensor_product(quad1d, box)
         else
-            newquad = quadrature(
-                [func],
-                [sign_condition],
-                height_dir,
-                box[height_dir],
-                quad.points,
-                quad.weights,
+            return cut_area_quadrature(
+                func,
+                grad,
+                sign_condition,
+                box,
                 quad1d,
+                recursionlevel,
+                maxlevels,
+                perturbation,
+                numperturbation,
+                maxperturbations,
             )
-            return QuadratureRule(newquad.points, newquad.weights)
         end
     end
+end
+
+function area_quadrature(
+    func,
+    grad,
+    sign_condition,
+    box,
+    quad1d;
+    maxlevels = 5,
+    perturbation = 1e-2,
+    maxperturbations = 2,
+)
+
+    return subdivision_area_quadrature(
+        func,
+        grad,
+        sign_condition,
+        box,
+        quad1d,
+        1,
+        maxlevels,
+        perturbation,
+        0,
+        maxperturbations,
+    )
 end
