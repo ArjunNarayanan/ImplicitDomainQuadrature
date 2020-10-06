@@ -42,8 +42,6 @@ function bound(f, box, order)
     return evaluate(ftm, sBoxN)
 end
 
-struct BisectionError <: Exception end
-
 function taylor_models_sign_search(
     func,
     initialbox::IntervalBox{N,T},
@@ -81,7 +79,7 @@ function taylor_models_sign_search(
     end
 
     if breachedtol
-        throw(BisectionError())
+        return 2
     elseif foundpos && foundneg
         return 0
     elseif foundpos && !foundneg
@@ -93,6 +91,48 @@ function taylor_models_sign_search(
     end
 end
 
+function interval_arithmetic_sign_search(func, initialbox, tol)
+
+    rtol = tol * diam(initialbox)
+
+    foundpos = foundneg = breachedtol = false
+    queue = [initialbox]
+
+    while !isempty(queue)
+        if (foundpos && foundneg)
+            break
+        else
+            box = popfirst!(queue)
+            if min_diam(box) < rtol
+                breachedtol = true
+                break
+            end
+            funcrange = func(box)
+            if inf(funcrange) > 0.0
+                foundpos = true
+            elseif sup(funcrange) < 0.0
+                foundneg = true
+            else
+                newboxes = split_box(box)
+                push!(queue, newboxes...)
+            end
+        end
+    end
+
+    if breachedtol
+        return 2
+    elseif foundpos && foundneg
+        return 0
+    elseif foundpos && !foundneg
+        return +1
+    elseif !foundpos && foundneg
+        return -1
+    else
+        error("Unexpected scenario")
+    end
+end
+
+
 """
     sign(f, box)
 return
@@ -100,30 +140,29 @@ return
 - `-1` if `f` is uniformly negative on `int`
 - `0` if `f` has at least one zero crossing in `int` (f assumed continuous)
 """
-function Base.sign(func, box; order = 5, tol = 1e-3)
-    return taylor_models_sign_search(func, box, order, tol)
+function Base.sign(func, box; tol = 1e-3)
+    return interval_arithmetic_sign_search(func,box,tol)
 end
 
 function sign_allow_perturbations(
     func,
     box,
     numperturbations;
-    order = 5,
     tol = 1e-3,
     perturbation = 1e-2,
     maxperturbations = 5,
 )
-    if numperturbations == maxperturbations
+    if numperturbations >= maxperturbations
         error("Failed to determine sign after $numperturbations perturbations of size $perturbation")
     else
-        try
-            return sign(func, box, order = order, tol = tol)
-        catch e
+        s = sign(func, box, tol = tol)
+        if s == 0 || s == +1 || s == -1
+            return s
+        else
             return sign_allow_perturbations(
                 x -> func(x) + perturbation,
                 box,
                 numperturbations + 1,
-                order = order,
                 tol = tol,
                 perturbation = perturbation,
                 maxperturbations = maxperturbations,
@@ -132,14 +171,46 @@ function sign_allow_perturbations(
     end
 end
 
+function sign_allow_perturbations(
+    func,
+    box;
+    tol = 1e-3,
+    perturbation = 1e-2,
+    maxperturbations = 5,
+)
 
-function Base.sign(P::InterpolatingPolynomial{1}, int; tol = 1e-3, order = 5)
+    return sign_allow_perturbations(
+        func,
+        box,
+        0,
+        tol = tol,
+        perturbation = perturbation,
+        maxperturbations = maxperturbations,
+    )
+end
+
+function (IP::InterpolatingPolynomial{1,NF,B,T})(
+    box::IntervalBox{2,S},
+) where {NF,B,T,S}
+    return IP(box[1], box[2])
+end
+
+function PolynomialBasis.gradient(
+    IP::InterpolatingPolynomial{1,NF,B,T},
+    box::IntervalBox{2,S},
+) where {NF,B,T,S}
+    return gradient(IP, box[1], box[2])
+end
+
+
+function Base.sign(P::InterpolatingPolynomial{1}, int; tol = 1e-3)
 
     max_coeff, min_coeff = extremal_coeffs_in_box(P, int)
     if max_coeff > 0 && min_coeff < 0
         return 0
     else
-        return sign(x -> P(x), int, order = order, tol = tol)
+        func(x) = P(x)
+        return sign(func, int, tol = tol)
     end
 end
 

@@ -128,7 +128,7 @@ p, w = IDQ.transform(quad1d, 3.0, 3.5)
 f2(x) = f(x[1])
 g2(x) = g(x[1])
 w0 = 2.0
-@test_throws AssertionError IDQ.extended_one_dimensional_quadrature(
+@test_throws AssertionError IDQ.extend_edge_quadrature_to_area_quadrature(
     [f2, g2],
     [+1],
     1,
@@ -138,7 +138,7 @@ w0 = 2.0
     w0,
     quad1d,
 )
-quad1 = IDQ.extended_one_dimensional_quadrature(
+quad1 = IDQ.extend_edge_quadrature_to_area_quadrature(
     [f2, g2],
     [+1, -1],
     1,
@@ -152,13 +152,13 @@ quad2 = IDQ.one_dimensional_quadrature([f, g], [+1, -1], 0.0, 3.5, quad1d)
 @test allapprox(quad1.points, IDQ.extend([1.0], 1, quad2.points))
 @test allapprox(quad1.weights, w0 * quad2.weights)
 
-quad1 = IDQ.extended_one_dimensional_quadrature(
+edgequad = IDQ.TemporaryQuadrature(reshape([1.0], 1, 1), [w0])
+quad1 = IDQ.extend_edge_quadrature_to_area_quadrature(
     [f2, g2],
     [+1, -1],
     1,
     Interval(0.0, 3.5),
-    [1.0],
-    w0,
+    edgequad,
     quad1d,
 )
 quad2 =
@@ -168,7 +168,7 @@ quad2 =
 
 x0 = [1.0 2.0 3.0]
 w0 = [3.0, 6.0, 9.0, 10.0]
-@test_throws AssertionError IDQ.extended_one_dimensional_quadrature(
+@test_throws AssertionError IDQ.extend_edge_quadrature_to_area_quadrature(
     [f2, g2],
     [+1, -1, +1],
     1,
@@ -178,7 +178,7 @@ w0 = [3.0, 6.0, 9.0, 10.0]
     w0,
     quad1d,
 )
-@test_throws AssertionError IDQ.extended_one_dimensional_quadrature(
+@test_throws AssertionError IDQ.extend_edge_quadrature_to_area_quadrature(
     [f2, g2],
     [+1, -1],
     1,
@@ -190,7 +190,7 @@ w0 = [3.0, 6.0, 9.0, 10.0]
 )
 
 w0 = [3.0, 6.0, 9.0]
-quad_ext = IDQ.extended_one_dimensional_quadrature(
+quad_ext = IDQ.extend_edge_quadrature_to_area_quadrature(
     [f2, g2],
     [+1, -1],
     1,
@@ -206,129 +206,153 @@ testw = vcat([quad.weights * w0[i] for i = 1:3]...)
 @test allapprox(quad_ext.points, testp)
 @test allapprox(quad_ext.weights, testw)
 
-quad_ext = IDQ.extended_one_dimensional_quadrature(
+edgequad = IDQ.TemporaryQuadrature(x0, w0)
+quad_ext = IDQ.extend_edge_quadrature_to_area_quadrature(
     [f2, g2],
     [+1, -1],
     1,
     Interval(0.0, 3.5),
-    x0,
-    w0,
+    edgequad,
     quad1d,
 )
 @test allapprox(quad_ext.points, testp)
 @test allapprox(quad_ext.weights, testw)
 
-f2(x) = 1.5 + x[1]
-P = InterpolatingPolynomial(1,2,2)
-coeffs = [f2(P.basis.points[:,i]) for i in 1:size(P.basis.points)[2]]
-update!(P,coeffs)
-x0 = [1.0]
-w0 = 3.0
-@test_throws ArgumentError IDQ.surface_quadrature(P,1,-1.0,1.0,x0,w0)
 
-f2(x) = x[1]-0.5
-P = InterpolatingPolynomial(1,2,2)
-coeffs = [f2(P.basis.points[:,i]) for i in 1:size(P.basis.points)[2]]
-update!(P,coeffs)
+f2(x) = x[1] - 0.5
+P = InterpolatingPolynomial(1, 2, 2)
+coeffs = [f2(P.basis.points[:, i]) for i = 1:size(P.basis.points)[2]]
+update!(P, coeffs)
 x0 = [1.0]
 w0 = 3.0
-p,w = IDQ.surface_quadrature(P,1,-1.0,1.0,x0,w0)
-@test allapprox(p,[0.5,1.0])
+p, w = IDQ.extend_edge_quadrature_to_surface_quadrature(
+    P,
+    x -> gradient(P, x),
+    1,
+    -1.0,
+    1.0,
+    x0,
+    w0,
+)
+@test allapprox(p, [0.5, 1.0])
 @test w ≈ w0
 
 f2(x) = x[1]
-P = InterpolatingPolynomial(1,2,2)
-coeffs = [f2(P.basis.points[:,i]) for i in 1:size(P.basis.points)[2]]
-update!(P,coeffs)
+P = InterpolatingPolynomial(1, 2, 2)
+coeffs = [f2(P.basis.points[:, i]) for i = 1:size(P.basis.points)[2]]
+update!(P, coeffs)
 x0 = [-0.5 0.0 0.5]
-w0 = [2.0,3.0,4.0]
-@test_throws AssertionError IDQ.surface_quadrature(P,1,-1.0,1.0,x0,[2.,3.,4.,5.])
-surf_quad = IDQ.surface_quadrature(P,1,-1.0,1.0,x0,w0)
-p = hcat([IDQ.extend(x0[i],1,0.0) for i in 1:3]...)
-@test allapprox(surf_quad.points,p)
-@test allapprox(surf_quad.weights,w0)
+w0 = [2.0, 3.0, 4.0]
+@test_throws AssertionError IDQ.extend_edge_quadrature_to_surface_quadrature(
+    P,
+    x -> gradient(P, x),
+    1,
+    -1.0,
+    1.0,
+    x0,
+    [2.0, 3.0, 4.0, 5.0],
+)
+surf_quad = IDQ.extend_edge_quadrature_to_surface_quadrature(
+    P,
+    x -> gradient(P, x),
+    1,
+    -1.0,
+    1.0,
+    x0,
+    w0,
+)
+p = hcat([IDQ.extend(x0[i], 1, 0.0) for i = 1:3]...)
+@test allapprox(surf_quad.points, p)
+@test allapprox(surf_quad.weights, w0)
 
-surf_quad = IDQ.surface_quadrature(P,1,Interval(-1.0,1.0),x0,w0)
-@test allapprox(surf_quad.points,p)
-@test allapprox(surf_quad.weights,w0)
+edgequad = IDQ.TemporaryQuadrature(x0,w0)
+surf_quad = IDQ.extend_edge_quadrature_to_surface_quadrature(
+    P,
+    x->gradient(P,x),
+    1,
+    Interval(-1.0, 1.0),
+    edgequad
+)
+@test allapprox(surf_quad.points, p)
+@test allapprox(surf_quad.weights, w0)
 
 f2(x) = x[2]
-P = InterpolatingPolynomial(1,2,2)
-coeffs = [f2(P.basis.points[:,i]) for i in 1:size(P.basis.points)[2]]
-update!(P,coeffs)
-@test IDQ.height_direction(P,[0.0,0.0]) == 2
-box = IntervalBox(-1..1,2)
-@test IDQ.height_direction(P,box) == 2
+P = InterpolatingPolynomial(1, 2, 2)
+coeffs = [f2(P.basis.points[:, i]) for i = 1:size(P.basis.points)[2]]
+update!(P, coeffs)
+@test IDQ.height_direction(x -> gradient(P, x), [0.0, 0.0]) == 2
+box = IntervalBox(-1..1, 2)
+@test IDQ.height_direction(x -> gradient(P, x), box) == 2
 
-flag,s = IDQ.is_suitable(2,P,box)
+flag, s = IDQ.is_suitable(2, x -> gradient(P, x), box)
 @test flag == true
 @test s == 1
 
-f2(x) = (x[2] + 0.5)*(x[2] - 0.5)
+f2(x) = (x[2] + 0.5) * (x[2] - 0.5)
+P = InterpolatingPolynomial(1, 2, 2)
+coeffs = [f2(P.basis.points[:, i]) for i = 1:size(P.basis.points)[2]]
+update!(P, coeffs)
+flag, s = IDQ.is_suitable(2, x -> gradient(P, x), box)
+@test flag == false
+
+@test IDQ.sign(1, 1, true, -1) == -1
+@test IDQ.sign(1, -1, false, -1) == -1
+@test IDQ.sign(1, -1, false, 1) == 0
+
+f2(x) = x[2]
+quad1d = IDQ.ReferenceQuadratureRule(5)
+box = IntervalBox(-1..1, 2)
+P = InterpolatingPolynomial(1, 2, 2)
+coeffs = [f2(P.basis.points[:, i]) for i = 1:size(P.basis.points)[2]]
+update!(P, coeffs)
+quad = IDQ.area_quadrature(P, +1, box, quad1d)
+p, w = IDQ.transform(quad1d, 0.0, 1.0)
+p2 = hcat([IDQ.extend([quad1d.points[i]], 2, p) for i = 1:5]...)
+w2 = vcat([quad1d.weights[i] * w for i = 1:5]...)
+@test allapprox(quad.points, p2)
+@test allapprox(quad.weights, w2)
+
+f2(x) = x[2] + 1.5
+quad1d = IDQ.ReferenceQuadratureRule(5)
+box = IntervalBox(-1..1, 2)
+P = InterpolatingPolynomial(1, 2, 2)
+coeffs = [f2(P.basis.points[:, i]) for i = 1:size(P.basis.points)[2]]
+update!(P, coeffs)
+quad = IDQ.area_quadrature(P, -1, box, quad1d)
+@test size(quad.points) == (2, 0)
+@test length(quad.weights) == 0
+
+f2(x) = x[2] + 1.5
+quad1d = IDQ.ReferenceQuadratureRule(5)
+box = IntervalBox(-1..1, 2)
+P = InterpolatingPolynomial(1, 2, 2)
+coeffs = [f2(P.basis.points[:, i]) for i = 1:size(P.basis.points)[2]]
+update!(P, coeffs)
+quad = IDQ.area_quadrature(P, +1, box, quad1d)
+p = hcat([IDQ.extend([quad1d.points[i]], 2, quad1d.points) for i = 1:5]...)
+w = vcat([quad1d.weights[i] * quad1d.weights for i = 1:5]...)
+@test allapprox(quad.points, p)
+@test allapprox(quad.weights, w)
+
+f2(x) = x[2]
+quad1d = IDQ.ReferenceQuadratureRule(5)
+box = IntervalBox(-1..1, 2)
+P = InterpolatingPolynomial(1, 2, 2)
+coeffs = [f2(P.basis.points[:, i]) for i = 1:size(P.basis.points)[2]]
+update!(P, coeffs)
+quad = IDQ.surface_quadrature(P, box, quad1d)
+p = IDQ.extend([0.0], 1, quad1d.points)
+@test allapprox(p, quad.points)
+@test allapprox(quad1d.weights, quad.weights)
+
+f2(x) = (x[2] - 0.5)*(x[2] + 0.75)
+quad1d = IDQ.ReferenceQuadratureRule(5)
+box = IntervalBox(-1..1,2)
 P = InterpolatingPolynomial(1,2,2)
 coeffs = [f2(P.basis.points[:,i]) for i in 1:size(P.basis.points)[2]]
 update!(P,coeffs)
-flag,s = IDQ.is_suitable(2,P,box)
-@test flag == false
+quad = IDQ.surface_quadrature(P,box,quad1d)
 
-@test IDQ.sign(1,1,true,-1) == -1
-@test IDQ.sign(1,-1,false,-1) == -1
-@test IDQ.sign(1,-1,false,1) == 0
-
-# f2(x) = x[2]
-# quad1d = IDQ.ReferenceQuadratureRule(5)
-# box = IntervalBox(-1..1,2)
-# P = InterpolatingPolynomial(1,2,2)
-# coeffs = [f2(P.basis.points[:,i]) for i in 1:size(P.basis.points)[2]]
-# update!(P,coeffs)
-# quad = IDQ.quadrature(P,+1,false,box,quad1d)
-# p,w = IDQ.transform(quad1d, 0.0, 1.0)
-# p2 = hcat([IDQ.extend([quad1d.points[i]], 2, p) for i in 1:5]...)
-# w2 = vcat([quad1d.weights[i]*w for i in 1:5]...)
-# @test allapprox(quad.points,p2)
-# @test allapprox(quad.weights,w2)
-#
-# f2(x) = x[2] + 1.5
-# quad1d = IDQ.ReferenceQuadratureRule(5)
-# box = IntervalBox(-1..1,2)
-# P = InterpolatingPolynomial(1,2,2)
-# coeffs = [f2(P.basis.points[:,i]) for i in 1:size(P.basis.points)[2]]
-# update!(P,coeffs)
-# quad = IDQ.quadrature(P,-1,false,box,quad1d)
-# @test size(quad.points) == (2,0)
-# @test length(quad.weights) == 0
-#
-# f2(x) = x[2] + 1.5
-# quad1d = IDQ.ReferenceQuadratureRule(5)
-# box = IntervalBox(-1..1,2)
-# P = InterpolatingPolynomial(1,2,2)
-# coeffs = [f2(P.basis.points[:,i]) for i in 1:size(P.basis.points)[2]]
-# update!(P,coeffs)
-# quad = IDQ.quadrature(P,+1,false,box,quad1d)
-# p = hcat([IDQ.extend([quad1d.points[i]], 2, quad1d.points) for i = 1:5]...)
-# w = vcat([quad1d.weights[i]*quad1d.weights for i = 1:5]...)
-# @test allapprox(quad.points,p)
-# @test allapprox(quad.weights,w)
-#
-# f2(x) = x[2]
-# quad1d = IDQ.ReferenceQuadratureRule(5)
-# box = IntervalBox(-1..1,2)
-# P = InterpolatingPolynomial(1,2,2)
-# coeffs = [f2(P.basis.points[:,i]) for i in 1:size(P.basis.points)[2]]
-# update!(P,coeffs)
-# quad = IDQ.quadrature(P,+1,true,box,quad1d)
-# p = IDQ.extend([0.0], 1, quad1d.points)
-# @test allapprox(p,quad.points)
-# @test allapprox(quad1d.weights,quad.weights)
-#
-# f2(x) = (x[2] - 0.5)*(x[2] + 0.75)
-# quad1d = IDQ.ReferenceQuadratureRule(5)
-# box = IntervalBox(-1..1,2)
-# P = InterpolatingPolynomial(1,2,2)
-# coeffs = [f2(P.basis.points[:,i]) for i in 1:size(P.basis.points)[2]]
-# update!(P,coeffs)
-# @test_throws AssertionError IDQ.quadrature(P,+1,true,box,quad1d)
-#
 # f2(x) = (x[2] - 0.5)*(x[2] + 0.5)
 # quad1d = IDQ.ReferenceQuadratureRule(5)
 # box = IntervalBox(-1..1,2)

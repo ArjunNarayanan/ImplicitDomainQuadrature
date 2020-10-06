@@ -1,9 +1,9 @@
 using Test
 using Plots
 using LinearAlgebra
-using PolynomialBasis
 using IntervalArithmetic
 using Revise
+using PolynomialBasis
 using ImplicitDomainQuadrature
 
 IDQ = ImplicitDomainQuadrature
@@ -52,11 +52,9 @@ box = IntervalBox(-1..1, 2)
 quad1d = IDQ.ReferenceQuadratureRule(2)
 
 quad = IDQ.area_quadrature(poly, x -> gradient(poly, x), -1, box, quad1d)
-
 @test isapprox(sum(quad.weights), 4.0, atol = 5e-2)
 
 quad = IDQ.area_quadrature(poly, x -> gradient(poly, x), +1, box, quad1d)
-
 @test isapprox(sum(quad.weights), 0.0, atol = 5e-2)
 
 x0 = [1.0, 1.0]
@@ -65,11 +63,9 @@ coeffs = plane_distance_function(poly.basis.points, normal, x0)
 update!(poly, coeffs)
 
 quad = IDQ.area_quadrature(poly, x -> gradient(poly, x), +1, box, quad1d)
-
 @test isapprox(sum(quad.weights), 0.0, atol = 5e-2)
 
 quad = IDQ.area_quadrature(poly, x -> gradient(poly, x), -1, box, quad1d)
-
 @test isapprox(sum(quad.weights), 4.0, atol = 5e-2)
 
 x0 = [-1.0, 1.0]
@@ -102,25 +98,18 @@ quad = IDQ.area_quadrature(poly, x -> gradient(poly, x), -1, box, quad1d)
 
 #######################################################################
 # Test a curved interface and subdivision
-try
-    sign(x->gradient(poly,x)[1],sb)
-catch e
-    if isa(e,IDQ.BisectionError)
-        println("I caught you BisectionError!")
-    else
-        throw(e)
-    end
-end
 
 
+radius = 0.5
+center = [0.0, 0.0]
+poly = InterpolatingPolynomial(1, 2, 3)
+coeffs = circle_distance_function(poly.basis.points, center, radius)
+update!(poly, coeffs)
+testarea = 4.0 - pi*0.5^2
 
+quad = IDQ.area_quadrature(poly, x -> gradient(poly, x), +1, box, quad1d)
+@test isapprox(sum(quad.weights),testarea,atol=1e-1)
 
-# radius = 0.5
-# center = [0.0, 0.0]
-# coeffs = circle_distance_function(poly.basis.points, center, radius)
-# update!(poly, coeffs)
-#
-# quad = IDQ.area_quadrature(poly, x -> gradient(poly, x), +1, box, quad1d)
-#
 # plot_zero_levelset(poly)
+# plot_zero_levelset((x,y) -> sqrt(x^2 + y^2) - 0.5)
 # scatter!(quad.points[1, :], quad.points[2, :], legend = false)
