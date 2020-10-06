@@ -128,3 +128,60 @@ function tensor_product_quadrature(D::Z,NQ::Z) where {Z<:Integer}
     box = IntervalBox(-1.0..1.0,D)
     return tensor_product(quad1d,box)
 end
+
+mutable struct TemporaryQuadrature{T}
+    points::Matrix{T}
+    weights::Vector{T}
+    function TemporaryQuadrature(
+        p::M,
+        w::V,
+    ) where {M<:AbstractMatrix{T},V<:AbstractVector} where {T}
+        d, np = size(p)
+        nw = length(w)
+        @assert np == nw
+        new{T}(p, w)
+    end
+end
+
+function TemporaryQuadrature(T, D::Z) where {Z<:Integer}
+    @assert 1 <= D <= 3
+    p = Matrix{T}(undef, D, 0)
+    w = Vector{T}(undef, 0)
+    return TemporaryQuadrature(p, w)
+end
+
+function QuadratureRule(quad::TemporaryQuadrature)
+    return QuadratureRule(quad.points, quad.weights)
+end
+
+function temporary_tensor_product(
+    quad::ReferenceQuadratureRule,
+    box::IntervalBox{2},
+)
+
+    p1, w1 = transform(quad, box[1])
+    p2, w2 = transform(quad, box[2])
+    points = tensor_product_points(p1, p2)
+    weights = kron(w1, w2)
+    return TemporaryQuadrature(points, weights)
+end
+
+function update!(quad::TemporaryQuadrature, p::V, w) where {V<:AbstractVector}
+    d = length(p)
+    nw = length(w)
+    dq, nqp = size(quad.points)
+    @assert dq == d
+    @assert nw == 1
+    quad.points = hcat(quad.points, p)
+    append!(quad.weights, w)
+end
+
+function update!(quad::TemporaryQuadrature, p::M, w) where {M<:AbstractMatrix}
+    d, np = size(p)
+    nw = length(w)
+    dq, nqp = size(quad.points)
+    @assert dq == d
+    @assert nw == np
+    quad.points = hcat(quad.points, p)
+    append!(quad.weights, w)
+end

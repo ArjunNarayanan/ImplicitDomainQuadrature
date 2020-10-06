@@ -11,6 +11,13 @@ function allequal(v1,v2)
     return all(v1 .≈ v2)
 end
 
+function allapprox(v1, v2; tol = 1e-14)
+    @assert length(v1) == length(v2)
+    flags = [isapprox(v1[i], v2[i], atol = tol) for i = 1:length(v1)]
+    return all(flags)
+end
+
+
 p = SMatrix{1,3}([+1.0 0.0 1.0])
 w = SVector{3}([1/3,2/3,1/3])
 @test_throws AssertionError IDQ.ReferenceQuadratureRule(p,w,-1.0,1.0)
@@ -171,3 +178,35 @@ testp = [p[1]  p[1]  p[2]  p[2]
 testw = kron(quad.weights,quad.weights)
 @test allequal(tq.points,testp)
 @test allequal(tq.weights,testw)
+
+p = [1.0 2.0 3.0]
+w = [1.0, 2.0]
+@test_throws AssertionError IDQ.TemporaryQuadrature(p, w)
+
+float_type = typeof(1.0)
+p = [-1.0 1.0]
+w = [0.5, 0.5]
+quad = IDQ.TemporaryQuadrature(p, w)
+@test typeof(quad) == IDQ.TemporaryQuadrature{float_type}
+@test allapprox(quad.points, p)
+@test allapprox(quad.weights, w)
+
+@test_throws AssertionError IDQ.TemporaryQuadrature(float_type, 0)
+@test_throws AssertionError IDQ.TemporaryQuadrature(float_type, 4)
+
+quad = IDQ.TemporaryQuadrature(float_type, 2)
+@test size(quad.points) == (2, 0)
+@test length(quad.weights) == 0
+
+p = [0.0, 1.0]
+w = [1.0, 2.0]
+@test_throws AssertionError IDQ.update!(quad, p, w)
+p = [0.0]
+w = [1.0]
+@test_throws AssertionError IDQ.update!(quad, p, w)
+
+p = [0.0, 1.0]
+w = [1.0]
+IDQ.update!(quad, p, w)
+@test allapprox(quad.points, p)
+@test allapprox(quad.weights, w)

@@ -2,7 +2,7 @@ using Test
 using LinearAlgebra
 using IntervalArithmetic
 using PolynomialBasis
-# using Revise
+using Revise
 using ImplicitDomainQuadrature
 
 IDQ = ImplicitDomainQuadrature
@@ -97,8 +97,6 @@ quad = IDQ.area_quadrature(poly, x -> gradient(poly, x), -1, box, quad1d)
 
 #######################################################################
 # Test a curved interface and subdivision
-
-
 radius = 0.5
 center = [0.0, 0.0]
 poly = InterpolatingPolynomial(1, 2, 3)
