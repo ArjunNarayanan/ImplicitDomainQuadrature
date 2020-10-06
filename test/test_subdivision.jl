@@ -1,9 +1,8 @@
 using Test
-using Plots
 using LinearAlgebra
 using IntervalArithmetic
-using Revise
 using PolynomialBasis
+# using Revise
 using ImplicitDomainQuadrature
 
 IDQ = ImplicitDomainQuadrature
@@ -107,9 +106,8 @@ coeffs = circle_distance_function(poly.basis.points, center, radius)
 update!(poly, coeffs)
 testarea = 4.0 - pi*0.5^2
 
-quad = IDQ.area_quadrature(poly, x -> gradient(poly, x), +1, box, quad1d)
+quad = IDQ.area_quadrature(poly, +1, box, quad1d)
 @test isapprox(sum(quad.weights),testarea,atol=1e-1)
 
-# plot_zero_levelset(poly)
-# plot_zero_levelset((x,y) -> sqrt(x^2 + y^2) - 0.5)
-# scatter!(quad.points[1, :], quad.points[2, :], legend = false)
+squad = IDQ.surface_quadrature(poly,box,quad1d)
+@test isapprox(sum(quad.weights),pi,atol=1e-1)

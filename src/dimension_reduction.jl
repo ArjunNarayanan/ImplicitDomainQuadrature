@@ -616,7 +616,7 @@ function cut_surface_quadrature(
             func,
             grad,
             heightdir,
-            lowerbox,
+            box[heightdir],
             edgequad,
         )
     end
@@ -717,62 +717,4 @@ function surface_quadrature(
         perturbation = perturbation,
         maxperturbations = maxperturbations,
     )
-end
-
-
-function quadrature(
-    func,
-    sign_condition,
-    surface,
-    box::IntervalBox{2},
-    quad1d::ReferenceQuadratureRule{NQ,T},
-) where {NQ,T}
-
-    s = sign(func, box)
-    if s * sign_condition < 0
-        quad = TemporaryQuadrature(T, 2)
-        return QuadratureRule(quad.points, quad.weights)
-    elseif s * sign_condition > 0
-        return tensor_product(quad1d, box)
-    else
-        height_dir = height_direction(func, box)
-        flag, gradient_sign = is_suitable(height_dir, func, box)
-        @assert gradient_sign != 0 "Subdivision not implemented yet"
-
-        lower(x) = func(extend(x, height_dir, box[height_dir].lo))
-        upper(x) = func(extend(x, height_dir, box[height_dir].hi))
-
-        lower_sign = sign(gradient_sign, sign_condition, surface, -1)
-        upper_sign = sign(gradient_sign, sign_condition, surface, +1)
-
-        lower_box = height_dir == 1 ? box[2] : box[1]
-        quad = quadrature(
-            [lower, upper],
-            [lower_sign, upper_sign],
-            lower_box,
-            quad1d,
-        )
-
-        if surface
-            newquad = surface_quadrature(
-                func,
-                height_dir,
-                box[height_dir],
-                quad.points,
-                quad.weights,
-            )
-            return QuadratureRule(newquad.points, newquad.weights)
-        else
-            newquad = quadrature(
-                [func],
-                [sign_condition],
-                height_dir,
-                box[height_dir],
-                quad.points,
-                quad.weights,
-                quad1d,
-            )
-            return QuadratureRule(newquad.points, newquad.weights)
-        end
-    end
 end

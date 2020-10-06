@@ -16,6 +16,6 @@ end
     include("test_dimension_reduction.jl")
 end
 
-@safetestset "Test Subdivision+Perturbation Algorithm" begin
+@safetestset "Test Subdivision & Perturbation Algorithm" begin
     include("test_subdivision.jl")
 end

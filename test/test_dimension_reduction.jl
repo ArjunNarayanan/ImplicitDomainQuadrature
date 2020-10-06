@@ -265,13 +265,13 @@ p = hcat([IDQ.extend(x0[i], 1, 0.0) for i = 1:3]...)
 @test allapprox(surf_quad.points, p)
 @test allapprox(surf_quad.weights, w0)
 
-edgequad = IDQ.TemporaryQuadrature(x0,w0)
+edgequad = IDQ.TemporaryQuadrature(x0, w0)
 surf_quad = IDQ.extend_edge_quadrature_to_surface_quadrature(
     P,
-    x->gradient(P,x),
+    x -> gradient(P, x),
     1,
     Interval(-1.0, 1.0),
-    edgequad
+    edgequad,
 )
 @test allapprox(surf_quad.points, p)
 @test allapprox(surf_quad.weights, w0)
@@ -345,18 +345,28 @@ p = IDQ.extend([0.0], 1, quad1d.points)
 @test allapprox(p, quad.points)
 @test allapprox(quad1d.weights, quad.weights)
 
-f2(x) = (x[2] - 0.5)*(x[2] + 0.75)
+f2(x) = (x[2] - 0.5) * (x[2] + 0.75)
 quad1d = IDQ.ReferenceQuadratureRule(5)
-box = IntervalBox(-1..1,2)
-P = InterpolatingPolynomial(1,2,2)
-coeffs = [f2(P.basis.points[:,i]) for i in 1:size(P.basis.points)[2]]
-update!(P,coeffs)
-quad = IDQ.surface_quadrature(P,box,quad1d)
+box = IntervalBox(-1..1, 2)
+P = InterpolatingPolynomial(1, 2, 2)
+coeffs = [f2(P.basis.points[:, i]) for i = 1:size(P.basis.points)[2]]
+update!(P, coeffs)
+quad = IDQ.surface_quadrature(P, box, quad1d)
 
-# f2(x) = (x[2] - 0.5)*(x[2] + 0.5)
-# quad1d = IDQ.ReferenceQuadratureRule(5)
-# box = IntervalBox(-1..1,2)
-# P = InterpolatingPolynomial(1,2,2)
-# coeffs = [f2(P.basis.points[:,i]) for i in 1:size(P.basis.points)[2]]
-# update!(P,coeffs)
-# @test_throws AssertionError IDQ.height_direction(P,box)
+f(x) = (x[2] ≈ -0.75 || x[2] ≈ 0.5) ? 1.0 : 0.0
+s = sum([f(quad.points[:, i]) * quad.weights[i] for i = 1:size(quad.points)[2]])
+@test s ≈ 4.0
+
+f2(x) = (x[2] - 0.5) * (x[2] + 0.5)
+quad1d = IDQ.ReferenceQuadratureRule(5)
+box = IntervalBox(-1..1, 2)
+P = InterpolatingPolynomial(1, 2, 2)
+coeffs = [f2(P.basis.points[:, i]) for i = 1:size(P.basis.points)[2]]
+update!(P, coeffs)
+quad = IDQ.surface_quadrature(P, box, quad1d)
+
+f(x) =
+    (isapprox(x[2], 0.5, atol = 2e-2) || isapprox(x[2], -0.5, atol = 2e-2)) ?
+    1.0 : 0.0
+s = sum([f(quad.points[:, i]) * quad.weights[i] for i = 1:size(quad.points)[2]])
+@test s ≈ 4.0
