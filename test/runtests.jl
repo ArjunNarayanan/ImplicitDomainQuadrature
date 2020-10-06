@@ -1,9 +1,5 @@
 using SafeTestsets
 
-@safetestset "Test Arithmetic Definitions for Taylor Models" begin
-    include("test_arithmetic.jl")
-end
-
 @safetestset "Test Function Bounds" begin
     include("test_bounds.jl")
 end

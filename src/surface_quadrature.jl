@@ -9,7 +9,7 @@ function extend_edge_quadrature_to_surface_quadrature(
 ) where {V<:AbstractVector{T}} where {T}
 
     extended_func(x) = func(extend(x0, height_dir, x))
-    _roots = unique_roots(extended_func, lo, hi)
+    _roots = find_zeros(extended_func, lo, hi)
 
     num_roots = length(_roots)
     @assert num_roots == 1 || num_roots == 0

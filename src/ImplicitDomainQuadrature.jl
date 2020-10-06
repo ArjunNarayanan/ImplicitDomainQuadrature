@@ -1,14 +1,12 @@
 module ImplicitDomainQuadrature
 
-using PolynomialBasis
-using StaticArrays
-using TaylorModels
 using LinearAlgebra
+using IntervalArithmetic
 using FastGaussQuadrature
 using Roots
-using IntervalRootFinding
+using StaticArrays
+using PolynomialBasis
 
-include("arithmetic.jl")
 include("bounds.jl")
 include("utilities.jl")
 include("quadrature_structs.jl")

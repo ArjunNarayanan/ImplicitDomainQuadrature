@@ -1,21 +1,6 @@
-function unique_root_intervals(f, x1, x2)
-    all_roots = roots(f, Interval(x1, x2))
-    return [r.interval for r in all_roots]
-end
-
-function unique_roots(f, x1, x2)
-    root_intervals = unique_root_intervals(f, x1, x2)
-    _roots = zeros(length(root_intervals))
-    for (idx, int) in enumerate(root_intervals)
-        _roots[idx] = find_zero(f, (int.lo, int.hi), Order1())
-    end
-    return _roots
-end
-
 function roots_and_ends(F, x1, x2)
     r = [x1, x2]
     for f in F
-        # _roots = unique_roots(f, x1, x2)
         _roots = find_zeros(f, x1, x2)
         append!(r, _roots)
     end

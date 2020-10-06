@@ -12,16 +12,6 @@ function allapprox(v1, v2; tol = 1e-14)
     return all(flags)
 end
 
-r = sort!(IDQ.unique_root_intervals(sin, pi / 2, 5pi / 2))
-@test length(r) == 2
-@test pi in r[1]
-@test 2pi in r[2]
-
-r = sort!(IDQ.unique_roots(cos, 0.0, 2pi))
-@test length(r) == 2
-@test pi / 2 ≈ r[1]
-@test 3pi / 2 ≈ r[2]
-
 f(x) = (x - 1.0) * (x - 1.5)
 g(x) = (x - 0.5) * (x - 1.25)
 r = IDQ.roots_and_ends([f, g], 0.0, 2.0)
