@@ -1,5 +1,4 @@
 using Test
-using StaticArrays
 using FastGaussQuadrature
 using IntervalArithmetic
 # using Revise
@@ -18,19 +17,19 @@ function allapprox(v1, v2; tol = 1e-14)
 end
 
 
-p = SMatrix{1,3}([+1.0 0.0 1.0])
-w = SVector{3}([1/3,2/3,1/3])
+p = [+1.0 0.0 1.0]
+w = [1/3,2/3,1/3]
 @test_throws AssertionError IDQ.ReferenceQuadratureRule(p,w,-1.0,1.0)
 
-p = SMatrix{1,3}([-1.0 0.0 1.0])
+p = [-1.0 0.0 1.0]
 @test_throws AssertionError IDQ.ReferenceQuadratureRule(p,w,1.,1.)
 @test_throws AssertionError IDQ.ReferenceQuadratureRule(p,w,-1.,1.)
 
 float_type = typeof(1.0)
-w = SVector{3}([0.5,1.0,0.5])
+w = [0.5,1.0,0.5]
 quad = IDQ.ReferenceQuadratureRule(p,w,-1.,1.)
-@test typeof(quad) == IDQ.ReferenceQuadratureRule{3,float_type}
-@test typeof(quad) <: IDQ.AbstractQuadratureRule{1,3}
+@test typeof(quad) == IDQ.ReferenceQuadratureRule{float_type}
+@test typeof(quad) <: IDQ.AbstractQuadratureRule{1}
 @test allequal(quad.points,p)
 @test allequal(quad.weights,w)
 @test quad.lo ≈ -1.0
@@ -63,8 +62,8 @@ p,w = gausslegendre(4)
 @test allequal(quad.weights,w)
 @test quad.lo ≈ -1.0
 @test quad.hi ≈ +1.0
-@test typeof(quad) == IDQ.ReferenceQuadratureRule{4,float_type}
-@test typeof(quad) <: IDQ.AbstractQuadratureRule{1,4}
+@test typeof(quad) == IDQ.ReferenceQuadratureRule{float_type}
+@test typeof(quad) <: IDQ.AbstractQuadratureRule{1}
 
 function test_iteration(quad,points,weights)
     count = 1
@@ -107,15 +106,15 @@ p,w = IDQ.transform(quad,3..4)
 @test allequal(p,3 .+ 0.5*(quad.points .+ 1))
 @test allequal(w,0.5*quad.weights)
 
-p = SMatrix{4,3}(zeros(4,3))
-w = SVector{3}([0.5,1.0,0.5])
+p = zeros(4,3)
+w = [0.5,1.0,0.5]
 @test_throws AssertionError IDQ.QuadratureRule(p,w)
-p = SMatrix{2,4}([-1. -1 +1 +1
-                  -1  +1 -1 +1])
-w = SVector{5}([1.,1.,1.,1.,1.])
+p = [-1. -1 +1 +1
+     -1  +1 -1 +1]
+w = [1.,1.,1.,1.,1.]
 @test_throws AssertionError IDQ.QuadratureRule(p,w)
 
-w = SVector{4}([1.,1.,1.,1.])
+w = [1.,1.,1.,1.]
 quad = IDQ.QuadratureRule(p,w)
 @test allequal(quad.points,p)
 @test allequal(quad.weights,w)
@@ -134,8 +133,8 @@ w = [1.,1.,1.,1.,1.]
 
 w = [1.,1.,1.,1.]
 quad = IDQ.QuadratureRule(p,w)
-@test typeof(quad) == IDQ.QuadratureRule{2,4,float_type}
-@test supertype(typeof(quad)) == IDQ.AbstractQuadratureRule{2,4}
+@test typeof(quad) == IDQ.QuadratureRule{2,float_type}
+@test supertype(typeof(quad)) == IDQ.AbstractQuadratureRule{2}
 @test allequal(quad.points,p)
 @test allequal(quad.weights,w)
 

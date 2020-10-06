@@ -141,13 +141,13 @@ function subdivision_surface_quadrature(
     func,
     grad,
     box,
-    quad1d::ReferenceQuadratureRule{NQ,T},
+    quad1d::ReferenceQuadratureRule{T},
     recursionlevel,
     maxlevels,
     perturbation,
     numperturbation,
     maxperturbations,
-) where {NQ,T}
+) where {T}
 
     if recursionlevel >= maxlevels
         error("Failed to construct an appropriate surface integration rule")
@@ -201,7 +201,7 @@ function surface_quadrature(
     maxperturbations = 2,
 )
 
-    return subdivision_surface_quadrature(
+    tempquad = subdivision_surface_quadrature(
         func,
         grad,
         box,
@@ -212,6 +212,7 @@ function surface_quadrature(
         0,
         maxperturbations,
     )
+    return QuadratureRule(tempquad)
 end
 
 function surface_quadrature(

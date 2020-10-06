@@ -90,8 +90,16 @@ coeffs = [f2(P.basis.points[:, i]) for i = 1:size(P.basis.points)[2]]
 update!(P, coeffs)
 quad = IDQ.surface_quadrature(P, box, quad1d)
 
+function integrate(f,quad)
+    s = 0.0
+    for (p,w) in quad
+        s += f(p)*w
+    end
+    return s
+end
+
 f(x) = (x[2] ≈ -0.75 || x[2] ≈ 0.5) ? 1.0 : 0.0
-s = sum([f(quad.points[:, i]) * quad.weights[i] for i = 1:size(quad.points)[2]])
+s = integrate(f,quad)
 @test s ≈ 4.0
 
 f2(x) = (x[2] - 0.5) * (x[2] + 0.5)
@@ -105,5 +113,5 @@ quad = IDQ.surface_quadrature(P, box, quad1d)
 f(x) =
     (isapprox(x[2], 0.5, atol = 2e-2) || isapprox(x[2], -0.5, atol = 2e-2)) ?
     1.0 : 0.0
-s = sum([f(quad.points[:, i]) * quad.weights[i] for i = 1:size(quad.points)[2]])
+s = integrate(f,quad)
 @test s ≈ 4.0

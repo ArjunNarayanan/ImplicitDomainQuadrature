@@ -10,8 +10,8 @@ function extend_edge_quadrature_to_area_quadrature(
     hi,
     x0::V,
     w0,
-    quad1d::ReferenceQuadratureRule{N,T},
-) where {N,T,V<:AbstractVector}
+    quad1d::ReferenceQuadratureRule{T},
+) where {T,V<:AbstractVector}
 
     @assert length(funcs) == length(sign_conditions)
 
@@ -40,8 +40,8 @@ function extend_edge_quadrature_to_area_quadrature(
     hi,
     x0::M,
     w0::V,
-    quad1d::ReferenceQuadratureRule{N,T},
-) where {N,T,V<:AbstractVector,M<:AbstractMatrix}
+    quad1d::ReferenceQuadratureRule{T},
+) where {T,V<:AbstractVector,M<:AbstractMatrix}
 
     @assert length(funcs) == length(sign_conditions)
     lower_dim, npoints = size(x0)
@@ -154,13 +154,13 @@ function subdivision_area_quadrature(
     grad,
     sign_condition,
     box,
-    quad1d::ReferenceQuadratureRule{NQ,T},
+    quad1d::ReferenceQuadratureRule{T},
     recursionlevel,
     maxlevels,
     perturbation,
     numperturbation,
     maxperturbations,
-) where {NQ,T}
+) where {T}
 
     @assert sign_condition == +1 || sign_condition == -1
 
@@ -224,7 +224,7 @@ function area_quadrature(
     maxperturbations = 2,
 )
 
-    return subdivision_area_quadrature(
+    tempquad = subdivision_area_quadrature(
         func,
         grad,
         sign_condition,
@@ -236,6 +236,7 @@ function area_quadrature(
         0,
         maxperturbations,
     )
+    return QuadratureRule(tempquad)
 end
 
 function area_quadrature(

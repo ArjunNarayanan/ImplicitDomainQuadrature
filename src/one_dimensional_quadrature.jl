@@ -7,8 +7,8 @@ function one_dimensional_quadrature(
     sign_conditions,
     lo,
     hi,
-    quad1d::ReferenceQuadratureRule{N,T},
-) where {N,T}
+    quad1d::ReferenceQuadratureRule{T},
+) where {T}
 
     nfuncs = length(funcs)
     nconds = length(sign_conditions)
