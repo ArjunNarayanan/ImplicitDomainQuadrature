@@ -66,6 +66,24 @@ function Base.getindex(
     return (view(quad.points, 1:dim, i), quad.weights[i])
 end
 
+function Base.show(
+    io::IO,
+    quad::Q,
+) where {Q<:AbstractQuadratureRule{dim}} where {dim}
+
+    numqp = quad.numqp
+    T = typeof(quad)
+    print(io, "$T\n\tDimension: $dim\n\tLength   : $numqp")
+end
+
+function Base.length(quad::Q) where {Q<:AbstractQuadratureRule}
+    return quad.numqp
+end
+
+function dimension(quad::Q) where {Q<:AbstractQuadratureRule{dim}} where {dim}
+    return dim
+end
+
 function affine_map(xi, xiL, xiR, xL, xR)
     return xL + (xR - xL) / (xiR - xiL) * (xi - xiL)
 end

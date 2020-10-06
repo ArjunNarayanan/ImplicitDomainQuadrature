@@ -14,6 +14,9 @@ include("area_quadrature.jl")
 include("surface_quadrature.jl")
 
 export area_quadrature,
-    surface_quadrature, tensor_product_quadrature
+    surface_quadrature,
+    tensor_product_quadrature,
+    QuadratureRule,
+    ReferenceQuadratureRule
 
 end # module
