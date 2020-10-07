@@ -13,7 +13,8 @@ include("one_dimensional_quadrature.jl")
 include("area_quadrature.jl")
 include("surface_quadrature.jl")
 
-export area_quadrature,
+export sign_allow_perturbations,
+    area_quadrature,
     surface_quadrature,
     tensor_product_quadrature,
     QuadratureRule,
