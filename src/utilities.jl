@@ -64,11 +64,10 @@ function is_suitable(
     height_dir,
     grad,
     box;
-    order = 5,
-    tol = 1e-3,
+    tol = 1e-4,
     C = 4,
     perturbation = 1e-2,
-    maxperturbations = 5,
+    maxperturbations = 10,
 )
 
     if height_dir == 0
@@ -106,4 +105,14 @@ function combine_quadratures(splitquads)
     points = hcat([sq.points for sq in splitquads]...)
     weights = vcat([sq.weights for sq in splitquads]...)
     return TemporaryQuadrature(points, weights)
+end
+
+function interpolating_gradient(poly::InterpolatingPolynomial{1,NF,B,T}) where {NF,B,T}
+    @assert PolynomialBasis.dimension(poly) == 2
+    points = poly.basis.points
+    interpvals = hcat([gradient(poly,points[:,i])' for i = 1:size(points)[2]]...)
+
+    interpgrad = InterpolatingPolynomial(2,poly.basis)
+    PolynomialBasis.update!(interpgrad,interpvals)
+    return interpgrad
 end

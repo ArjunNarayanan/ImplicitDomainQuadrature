@@ -216,7 +216,7 @@ function surface_quadrature(
 end
 
 function surface_quadrature(
-    func,
+    poly::InterpolatingPolynomial,
     box,
     quad1d;
     maxlevels = 5,
@@ -224,9 +224,10 @@ function surface_quadrature(
     maxperturbations = 2,
 )
 
+    interpgrad = interpolating_gradient(poly)
     return surface_quadrature(
-        func,
-        x -> gradient(func, x),
+        poly,
+        interpgrad,
         box,
         quad1d,
         maxlevels = maxlevels,

@@ -120,9 +120,10 @@ function sign_allow_perturbations(
     )
 end
 
-function (IP::InterpolatingPolynomial{1,NF,B,T})(
+function (IP::InterpolatingPolynomial{N,NF,B,T})(
     box::IntervalBox{2,S},
-) where {NF,B,T,S}
+) where {N,NF,B,T,S}
+    @assert PolynomialBasis.dimension(IP) == 2
     return IP(box[1], box[2])
 end
 
@@ -132,7 +133,6 @@ function PolynomialBasis.gradient(
 ) where {NF,B,T,S}
     return gradient(IP, box[1], box[2])
 end
-
 
 function Base.sign(P::InterpolatingPolynomial{1}, int; tol = 1e-3)
 

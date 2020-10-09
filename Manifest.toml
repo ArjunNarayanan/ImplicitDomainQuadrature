@@ -9,6 +9,12 @@ git-tree-sha1 = "9d1c22cff9c04207f336b8e64840d0bd40d86e0e"
 uuid = "96374032-68de-5a5b-8d9e-752f78720389"
 version = "0.8.0"
 
+[[Compat]]
+deps = ["Base64", "Dates", "DelimitedFiles", "Distributed", "InteractiveUtils", "LibGit2", "Libdl", "LinearAlgebra", "Markdown", "Mmap", "Pkg", "Printf", "REPL", "Random", "SHA", "Serialization", "SharedArrays", "Sockets", "SparseArrays", "Statistics", "Test", "UUIDs", "Unicode"]
+git-tree-sha1 = "cf03b37436c6bc162e7c8943001568b4cad4bee3"
+uuid = "34da2185-b29b-5c13-b0c7-acf172513d20"
+version = "3.19.0"
+
 [[CompilerSupportLibraries_jll]]
 deps = ["Libdl", "Pkg"]
 git-tree-sha1 = "7c4f882c41faa72118841185afc58a2eb00ef612"
@@ -16,14 +22,18 @@ uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
 version = "0.3.3+0"
 
 [[DataStructures]]
-deps = ["InteractiveUtils", "OrderedCollections"]
-git-tree-sha1 = "88d48e133e6d3dd68183309877eac74393daa7eb"
+deps = ["Compat", "InteractiveUtils", "OrderedCollections"]
+git-tree-sha1 = "db07bb22795762895b60e44d62b34b16c982a687"
 uuid = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
-version = "0.17.20"
+version = "0.18.7"
 
 [[Dates]]
 deps = ["Printf"]
 uuid = "ade2ca70-3891-5945-98fb-dc099432e06a"
+
+[[DelimitedFiles]]
+deps = ["Mmap"]
+uuid = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 
 [[Distributed]]
 deps = ["Random", "Serialization", "Sockets"]
@@ -84,11 +94,14 @@ uuid = "56ddb016-857b-54e1-b83d-db4d58db5568"
 deps = ["Base64"]
 uuid = "d6f4376e-aef5-505a-96c1-9c027394607a"
 
+[[Mmap]]
+uuid = "a63ad114-7e13-5084-954f-fe012c677804"
+
 [[MultivariatePolynomials]]
 deps = ["DataStructures", "LinearAlgebra", "MutableArithmetics"]
-git-tree-sha1 = "e6d3fb3f400e64f642336585ed9fa4a9945bbb1b"
+git-tree-sha1 = "63946612e95b2b5e3ae9462a5d485b09b2959792"
 uuid = "102ac46a-7ee4-5c85-9060-abc95bfdeaa3"
-version = "0.3.10"
+version = "0.3.11"
 
 [[MutableArithmetics]]
 deps = ["LinearAlgebra", "SparseArrays", "Test"]
@@ -113,7 +126,7 @@ uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 
 [[PolynomialBasis]]
 deps = ["DynamicPolynomials", "StaticArrays", "StaticPolynomials"]
-git-tree-sha1 = "1f00e0fb223f3aa742f8a60c350336e40d8dfb19"
+git-tree-sha1 = "9ab830b6a8a59108ab69663908ff94f942732a07"
 repo-rev = "master"
 repo-url = "https://github.com/ArjunNarayanan/PolynomialBasis.jl.git"
 uuid = "776a168a-1973-4f1d-bada-3c06b642fffd"
@@ -164,6 +177,10 @@ deps = ["Test"]
 git-tree-sha1 = "faca28c7937138d560ede5bfef2076d0cdf3584b"
 uuid = "3cc68bcd-71a2-5612-b932-767ffbe40ab0"
 version = "0.2.0"
+
+[[SharedArrays]]
+deps = ["Distributed", "Mmap", "Random", "Serialization"]
+uuid = "1a1011a3-84de-559e-8e89-a11a2f7dc383"
 
 [[Sockets]]
 uuid = "6462fe0b-24de-5631-8697-dd941f90decc"

@@ -240,7 +240,7 @@ function area_quadrature(
 end
 
 function area_quadrature(
-    func,
+    poly::InterpolatingPolynomial,
     sign_condition,
     box,
     quad1d;
@@ -249,9 +249,10 @@ function area_quadrature(
     maxperturbations = 2,
 ) where {NF,B,T}
 
+    interpgrad = interpolating_gradient(poly)
     return area_quadrature(
-        func,
-        x -> gradient(func, x),
+        poly,
+        interpgrad,
         sign_condition,
         box,
         quad1d,
