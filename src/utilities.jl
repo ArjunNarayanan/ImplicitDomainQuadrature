@@ -107,7 +107,7 @@ function combine_quadratures(splitquads)
     return TemporaryQuadrature(points, weights)
 end
 
-function interpolating_gradient(poly::InterpolatingPolynomial{1,NF,B,T}) where {NF,B,T}
+function interpolating_gradient(poly::InterpolatingPolynomial{1,B,T}) where {B,T}
     @assert PolynomialBasis.dimension(poly) == 2
     points = poly.basis.points
     interpvals = hcat([gradient(poly,points[:,i])' for i = 1:size(points)[2]]...)
