@@ -194,13 +194,15 @@ end
 function surface_quadrature(
     func,
     grad,
-    box,
+    xL,
+    xR,
     quad1d;
     maxlevels = 5,
     perturbation = 1e-2,
     maxperturbations = 2,
 )
 
+    box = IntervalBox(xL,xR)
     tempquad = subdivision_surface_quadrature(
         func,
         grad,
@@ -217,7 +219,8 @@ end
 
 function surface_quadrature(
     poly::InterpolatingPolynomial,
-    box,
+    xL,
+    xR,
     quad1d;
     maxlevels = 5,
     perturbation = 1e-2,
@@ -228,7 +231,8 @@ function surface_quadrature(
     return surface_quadrature(
         poly,
         interpgrad,
-        box,
+        xL,
+        xR,
         quad1d,
         maxlevels = maxlevels,
         perturbation = perturbation,

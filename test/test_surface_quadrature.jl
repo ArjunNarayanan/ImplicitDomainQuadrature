@@ -73,45 +73,43 @@ surf_quad = IDQ.extend_edge_quadrature_to_surface_quadrature(
 
 f2(x) = x[2]
 quad1d = IDQ.ReferenceQuadratureRule(5)
-box = IntervalBox(-1..1, 2)
+xL, xR = [-1.0, -1.0], [1.0, 1.0]
 P = InterpolatingPolynomial(1, 2, 2)
 coeffs = [f2(P.basis.points[:, i]) for i = 1:size(P.basis.points)[2]]
 update!(P, coeffs)
-quad = IDQ.surface_quadrature(P, box, quad1d)
+quad = IDQ.surface_quadrature(P, xL, xR, quad1d)
 p = IDQ.extend([0.0], 1, quad1d.points)
 @test allapprox(p, quad.points)
 @test allapprox(quad1d.weights, quad.weights)
 
 f2(x) = (x[2] - 0.5) * (x[2] + 0.75)
 quad1d = IDQ.ReferenceQuadratureRule(5)
-box = IntervalBox(-1..1, 2)
+xL, xR = [-1.0, -1.0], [1.0, 1.0]
 P = InterpolatingPolynomial(1, 2, 2)
 coeffs = [f2(P.basis.points[:, i]) for i = 1:size(P.basis.points)[2]]
 update!(P, coeffs)
-quad = IDQ.surface_quadrature(P, box, quad1d)
+quad = IDQ.surface_quadrature(P, xL, xR, quad1d)
 
-function integrate(f,quad)
+function integrate(f, quad)
     s = 0.0
-    for (p,w) in quad
-        s += f(p)*w
+    for (p, w) in quad
+        s += f(p) * w
     end
     return s
 end
 
 f(x) = (x[2] ≈ -0.75 || x[2] ≈ 0.5) ? 1.0 : 0.0
-s = integrate(f,quad)
+s = integrate(f, quad)
 @test s ≈ 4.0
 
 f2(x) = (x[2] - 0.5) * (x[2] + 0.5)
 quad1d = IDQ.ReferenceQuadratureRule(5)
-box = IntervalBox(-1..1, 2)
+xL, xR = [-1.0, -1.0], [1.0, 1.0]
 P = InterpolatingPolynomial(1, 2, 2)
 coeffs = [f2(P.basis.points[:, i]) for i = 1:size(P.basis.points)[2]]
 update!(P, coeffs)
-quad = IDQ.surface_quadrature(P, box, quad1d)
+quad = IDQ.surface_quadrature(P, xL, xR, quad1d)
 
-f(x) =
-    (isapprox(x[2], 0.5, atol = 2e-2) || isapprox(x[2], -0.5, atol = 2e-2)) ?
-    1.0 : 0.0
-s = integrate(f,quad)
+f(x) = (isapprox(x[2], 0.5, atol = 2e-2) || isapprox(x[2], -0.5, atol = 2e-2)) ? 1.0 : 0.0
+s = integrate(f, quad)
 @test s ≈ 4.0

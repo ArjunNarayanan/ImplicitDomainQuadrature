@@ -217,13 +217,15 @@ function area_quadrature(
     func,
     grad,
     sign_condition,
-    box,
+    xL,
+    xR,
     quad1d;
     maxlevels = 5,
     perturbation = 1e-2,
     maxperturbations = 2,
 )
 
+    box = IntervalBox(xL,xR)
     tempquad = subdivision_area_quadrature(
         func,
         grad,
@@ -242,7 +244,8 @@ end
 function area_quadrature(
     poly::InterpolatingPolynomial,
     sign_condition,
-    box,
+    xL,
+    xR,
     quad1d;
     maxlevels = 5,
     perturbation = 1e-2,
@@ -254,7 +257,8 @@ function area_quadrature(
         poly,
         interpgrad,
         sign_condition,
-        box,
+        xL,
+        xR,
         quad1d,
         maxlevels = maxlevels,
         perturbation = perturbation,

@@ -13,8 +13,8 @@ function allapprox(v1, v2; tol = 1e-14)
     return all(flags)
 end
 
-f(x) = (x - 1.0)*(x - 2.0)*(x - 3.0)
-g(x) = (x - 0.1)*(x - 0.2)*(x - 2.5)
+f(x) = (x - 1.0) * (x - 2.0) * (x - 3.0)
+g(x) = (x - 0.1) * (x - 0.2) * (x - 2.5)
 
 quad1d = IDQ.ReferenceQuadratureRule(3)
 f2(x) = f(x[1])
@@ -54,8 +54,7 @@ quad1 = IDQ.extend_edge_quadrature_to_area_quadrature(
     edgequad,
     quad1d,
 )
-quad2 =
-    IDQ.one_dimensional_quadrature([f, g], [+1, -1], Interval(0.0, 3.5), quad1d)
+quad2 = IDQ.one_dimensional_quadrature([f, g], [+1, -1], Interval(0.0, 3.5), quad1d)
 @test allapprox(quad1.points, IDQ.extend([1.0], 1, quad2.points))
 @test allapprox(quad1.weights, w0 * quad2.weights)
 
@@ -116,11 +115,11 @@ quad_ext = IDQ.extend_edge_quadrature_to_area_quadrature(
 
 f2(x) = x[2]
 quad1d = IDQ.ReferenceQuadratureRule(5)
-box = IntervalBox(-1..1, 2)
+xL, xR = [-1.0, -1.0], [1.0, 1.0]
 P = InterpolatingPolynomial(1, 2, 2)
 coeffs = [f2(P.basis.points[:, i]) for i = 1:size(P.basis.points)[2]]
 update!(P, coeffs)
-quad = IDQ.area_quadrature(P, +1, box, quad1d)
+quad = IDQ.area_quadrature(P, +1, xL, xR, quad1d)
 p, w = IDQ.transform(quad1d, 0.0, 1.0)
 p2 = hcat([IDQ.extend([quad1d.points[i]], 2, p) for i = 1:5]...)
 w2 = vcat([quad1d.weights[i] * w for i = 1:5]...)
@@ -130,21 +129,21 @@ w2 = vcat([quad1d.weights[i] * w for i = 1:5]...)
 
 f2(x) = x[2] + 1.5
 quad1d = IDQ.ReferenceQuadratureRule(5)
-box = IntervalBox(-1..1, 2)
+xL, xR = [-1.0, -1.0], [1.0, 1.0]
 P = InterpolatingPolynomial(1, 2, 2)
 coeffs = [f2(P.basis.points[:, i]) for i = 1:size(P.basis.points)[2]]
 update!(P, coeffs)
-quad = IDQ.area_quadrature(P, -1, box, quad1d)
+quad = IDQ.area_quadrature(P, -1, xL, xR, quad1d)
 @test size(quad.points) == (2, 0)
 @test length(quad.weights) == 0
 
 f2(x) = x[2] + 1.5
 quad1d = IDQ.ReferenceQuadratureRule(5)
-box = IntervalBox(-1..1, 2)
+xL, xR = [-1.0, -1.0], [1.0, 1.0]
 P = InterpolatingPolynomial(1, 2, 2)
 coeffs = [f2(P.basis.points[:, i]) for i = 1:size(P.basis.points)[2]]
 update!(P, coeffs)
-quad = IDQ.area_quadrature(P, +1, box, quad1d)
+quad = IDQ.area_quadrature(P, +1, xL, xR, quad1d)
 p = hcat([IDQ.extend([quad1d.points[i]], 2, quad1d.points) for i = 1:5]...)
 w = vcat([quad1d.weights[i] * quad1d.weights for i = 1:5]...)
 @test allapprox(quad.points, p)
