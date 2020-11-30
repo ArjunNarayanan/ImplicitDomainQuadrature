@@ -77,12 +77,13 @@ end
 
 function sign_allow_perturbations(
     func,
-    box,
+    box::IntervalBox{N,T},
     numperturbations;
     tol = 1e-3,
     perturbation = 1e-2,
     maxperturbations = 5,
-)
+) where {N,T}
+
     if numperturbations >= maxperturbations
         error("Failed to determine sign after $numperturbations perturbations of size $perturbation")
     else
@@ -104,12 +105,32 @@ end
 
 function sign_allow_perturbations(
     func,
-    box;
+    box::IntervalBox{N,T};
+    tol = 1e-3,
+    perturbation = 1e-2,
+    maxperturbations = 5,
+) where {N,T}
+
+    return sign_allow_perturbations(
+        func,
+        box,
+        0,
+        tol = tol,
+        perturbation = perturbation,
+        maxperturbations = maxperturbations,
+    )
+end
+
+function sign_allow_perturbations(
+    func,
+    xL,
+    xR;
     tol = 1e-3,
     perturbation = 1e-2,
     maxperturbations = 5,
 )
 
+    box = IntervalBox(xL,xR)
     return sign_allow_perturbations(
         func,
         box,
