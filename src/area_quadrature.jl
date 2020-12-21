@@ -174,9 +174,6 @@ function subdivision_area_quadrature(
                 quad1d,
                 recursionlevel,
                 maxlevels,
-                perturbation,
-                numperturbation,
-                maxperturbations,
             )
         end
     end
@@ -190,7 +187,6 @@ function area_quadrature(
     xR,
     numqp;
     maxlevels = 5,
-    perturbation = 1e-2,
 )
 
     box = IntervalBox(xL,xR)
@@ -204,15 +200,12 @@ function area_quadrature(
         quad1d,
         1,
         maxlevels,
-        perturbation,
-        0,
-        maxperturbations,
     )
     return QuadratureRule(tempquad)
 end
 
 function area_quadrature(
-    poly::InterpolatingPolynomial,
+    poly::InterpolatingPolynomial{1},
     sign_condition,
     xL,
     xR,

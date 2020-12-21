@@ -2,7 +2,7 @@ using Test
 using LinearAlgebra
 using IntervalArithmetic
 using PolynomialBasis
-# using Revise
+using Revise
 using ImplicitDomainQuadrature
 
 IDQ = ImplicitDomainQuadrature
