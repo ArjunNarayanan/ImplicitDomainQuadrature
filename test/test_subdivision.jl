@@ -48,12 +48,12 @@ coeffs = plane_distance_function(poly.basis.points, normal, x0)
 update!(poly, coeffs)
 
 xL, xR = [-1.0, -1.0], [1.0, 1.0]
-quad1d = IDQ.ReferenceQuadratureRule(2)
+numqp = 2
 
-quad = IDQ.area_quadrature(poly, x -> gradient(poly, x), -1, xL, xR, quad1d)
+quad = area_quadrature(poly,-1,xL,xR,numqp)
 @test isapprox(sum(quad.weights), 4.0, atol = 5e-2)
 
-quad = IDQ.area_quadrature(poly, x -> gradient(poly, x), +1, xL, xR, quad1d)
+quad = area_quadrature(poly,+1,xL,xR,numqp)
 @test isapprox(sum(quad.weights), 0.0, atol = 5e-2)
 
 x0 = [1.0, 1.0]

@@ -64,22 +64,20 @@ function is_suitable(
     height_dir,
     grad,
     box;
-    tol = 1e-4,
+    tol = 1e-3,
     C = 4,
     perturbation = 1e-2,
-    maxperturbations = 10,
 )
 
     if height_dir == 0
         return false, 0
     else
         gradk(x) = grad(x)[height_dir]
-        s = sign_allow_perturbations(
+        s = sign(
             gradk,
             box,
             tol = tol,
             perturbation = perturbation,
-            maxperturbations = 5,
         )
         curvatureflag = true
         if s != 0

@@ -22,7 +22,7 @@ function min_diam(box)
     return minimum(diam.(box))
 end
 
-function interval_arithmetic_sign_search(func, initialbox, tol)
+function interval_arithmetic_sign_search(func, initialbox, tol, perturbation)
 
     rtol = tol * diam(initialbox)
 
@@ -39,9 +39,9 @@ function interval_arithmetic_sign_search(func, initialbox, tol)
                 break
             end
             funcrange = func(box)
-            if inf(funcrange) > 0.0
+            if inf(funcrange) > -perturbation
                 foundpos = true
-            elseif sup(funcrange) < 0.0
+            elseif sup(funcrange) < perturbation
                 foundneg = true
             else
                 newboxes = split_box(box)
@@ -64,6 +64,9 @@ function interval_arithmetic_sign_search(func, initialbox, tol)
 end
 
 
+function Base.sign(func, box; tol = 1e-3, perturbation = 0.0)
+    return interval_arithmetic_sign_search(func, box, tol, perturbation)
+end
 """
     sign(f, box)
 return
@@ -71,79 +74,42 @@ return
 - `-1` if `f` is uniformly negative on `int`
 - `0` if `f` has at least one zero crossing in `int` (f assumed continuous)
 """
-function Base.sign(func, box; tol = 1e-3)
-    return interval_arithmetic_sign_search(func,box,tol)
+function Base.sign(func, xL, xR; tol = 1e-3, perturbation = 0.0)
+    box = IntervalBox(xL, xR)
+    return sign(func, box; tol = tol, perturbation = perturbation)
 end
 
-function sign_allow_perturbations(
-    func,
-    box::IntervalBox{N,T},
-    numperturbations;
-    tol = 1e-3,
-    perturbation = 1e-2,
-    maxperturbations = 5,
-) where {N,T}
+function extremal_coeffs_in_box(poly, xL, xR)
 
-    if numperturbations >= maxperturbations
-        error("Failed to determine sign after $numperturbations perturbations of size $perturbation")
-    else
-        s = sign(func, box, tol = tol)
-        if s == 0 || s == +1 || s == -1
-            return s
-        else
-            return sign_allow_perturbations(
-                x -> func(x) + perturbation,
-                box,
-                numperturbations + 1,
-                tol = tol,
-                perturbation = perturbation,
-                maxperturbations = maxperturbations,
-            )
+    max_coeff = -Inf
+    min_coeff = Inf
+    points = poly.basis.points
+    dim, npoints = size(points)
+    for i = 1:npoints
+        p = view(points, :, i)
+        if all(xL .<= p .<= xR)
+            coeff = poly.coeffs[i]
+            min_coeff = min(min_coeff, coeff)
+            max_coeff = max(max_coeff, coeff)
         end
+    end
+    return max_coeff, min_coeff
+end
+
+
+function Base.sign(P::InterpolatingPolynomial{1}, xL, xR; tol = 1e-3, perturbation = 0.0)
+
+    max_coeff, min_coeff = extremal_coeffs_in_box(P, xL, xR)
+    if max_coeff >= 0 && min_coeff <= 0
+        return 0
+    else
+        box = IntervalBox(xL, xR)
+        return interval_arithmetic_sign_search(P, box, tol, perturbation)
     end
 end
 
-function sign_allow_perturbations(
-    func,
-    box::IntervalBox{N,T};
-    tol = 1e-3,
-    perturbation = 1e-2,
-    maxperturbations = 5,
-) where {N,T}
 
-    return sign_allow_perturbations(
-        func,
-        box,
-        0,
-        tol = tol,
-        perturbation = perturbation,
-        maxperturbations = maxperturbations,
-    )
-end
-
-function sign_allow_perturbations(
-    func,
-    xL,
-    xR;
-    tol = 1e-3,
-    perturbation = 1e-2,
-    maxperturbations = 5,
-)
-
-    box = IntervalBox(xL,xR)
-    return sign_allow_perturbations(
-        func,
-        box,
-        0,
-        tol = tol,
-        perturbation = perturbation,
-        maxperturbations = maxperturbations,
-    )
-end
-
-function (IP::InterpolatingPolynomial{N,B,T})(
-    box::IntervalBox{2,S},
-) where {N,B,T,S}
+function (IP::InterpolatingPolynomial{N,B,T})(box::IntervalBox{2,S}) where {N,B,T,S}
     @assert PolynomialBasis.dimension(IP) == 2
     return IP(box[1], box[2])
 end
@@ -153,32 +119,4 @@ function PolynomialBasis.gradient(
     box::IntervalBox{2,S},
 ) where {B,T,S}
     return gradient(IP, box[1], box[2])
-end
-
-function Base.sign(P::InterpolatingPolynomial{1}, int; tol = 1e-3)
-
-    max_coeff, min_coeff = extremal_coeffs_in_box(P, int)
-    if max_coeff > 0 && min_coeff < 0
-        return 0
-    else
-        func(x) = P(x)
-        return sign(func, int, tol = tol)
-    end
-end
-
-function extremal_coeffs_in_box(poly, box)
-
-    max_coeff = -Inf
-    min_coeff = Inf
-    points = poly.basis.points
-    dim, npoints = size(points)
-    for i = 1:npoints
-        p = view(points, :, i)
-        if p in box
-            coeff = poly.coeffs[i]
-            min_coeff = min(min_coeff, coeff)
-            max_coeff = max(max_coeff, coeff)
-        end
-    end
-    return max_coeff, min_coeff
 end

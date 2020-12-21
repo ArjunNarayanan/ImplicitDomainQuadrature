@@ -1,7 +1,7 @@
 using Test
 using FastGaussQuadrature
 using IntervalArithmetic
-# using Revise
+using Revise
 using ImplicitDomainQuadrature
 
 IDQ = ImplicitDomainQuadrature

@@ -114,12 +114,13 @@ quad_ext = IDQ.extend_edge_quadrature_to_area_quadrature(
 
 
 f2(x) = x[2]
-quad1d = IDQ.ReferenceQuadratureRule(5)
+numqp = 5
+quad1d = IDQ.ReferenceQuadratureRule(numqp)
 xL, xR = [-1.0, -1.0], [1.0, 1.0]
 P = InterpolatingPolynomial(1, 2, 2)
 coeffs = [f2(P.basis.points[:, i]) for i = 1:size(P.basis.points)[2]]
 update!(P, coeffs)
-quad = IDQ.area_quadrature(P, +1, xL, xR, quad1d)
+quad = IDQ.area_quadrature(P, +1, xL, xR, numqp)
 p, w = IDQ.transform(quad1d, 0.0, 1.0)
 p2 = hcat([IDQ.extend([quad1d.points[i]], 2, p) for i = 1:5]...)
 w2 = vcat([quad1d.weights[i] * w for i = 1:5]...)
@@ -128,7 +129,8 @@ w2 = vcat([quad1d.weights[i] * w for i = 1:5]...)
 
 
 f2(x) = x[2] + 1.5
-quad1d = IDQ.ReferenceQuadratureRule(5)
+numqp = 5
+quad1d = IDQ.ReferenceQuadratureRule(numqp)
 xL, xR = [-1.0, -1.0], [1.0, 1.0]
 P = InterpolatingPolynomial(1, 2, 2)
 coeffs = [f2(P.basis.points[:, i]) for i = 1:size(P.basis.points)[2]]

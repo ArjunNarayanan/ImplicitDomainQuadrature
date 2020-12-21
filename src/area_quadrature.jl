@@ -98,9 +98,6 @@ function cut_area_quadrature(
     quad1d,
     recursionlevel,
     maxlevels,
-    perturbation,
-    numperturbation,
-    maxperturbations,
 )
     heightdir = height_direction(grad, box)
     issuitable, gradsign = is_suitable(heightdir, grad, box)
@@ -115,9 +112,6 @@ function cut_area_quadrature(
                 quad1d,
                 recursionlevel + 1,
                 maxlevels,
-                perturbation,
-                numperturbation,
-                maxperturbations,
             ) for sb in splitboxes
         ]
         return combine_quadratures(splitquads)
@@ -157,9 +151,6 @@ function subdivision_area_quadrature(
     quad1d::ReferenceQuadratureRule{T},
     recursionlevel,
     maxlevels,
-    perturbation,
-    numperturbation,
-    maxperturbations,
 ) where {T}
 
     @assert sign_condition == +1 || sign_condition == -1
@@ -169,46 +160,24 @@ function subdivision_area_quadrature(
         wt = [area(box)]
         return TemporaryQuadrature(xc, wt)
     else
-
         s = sign(func, box)
-        if s == -1 || s == 0 || s == +1
-            if s * sign_condition < 0
-                return TemporaryQuadrature(T, 2)
-            elseif s * sign_condition > 0
-                return temporary_tensor_product(quad1d, box)
-            else
-                return cut_area_quadrature(
-                    func,
-                    grad,
-                    sign_condition,
-                    box,
-                    quad1d,
-                    recursionlevel,
-                    maxlevels,
-                    perturbation,
-                    numperturbation,
-                    maxperturbations,
-                )
-            end
+        if s * sign_condition < 0
+            return TemporaryQuadrature(T, 2)
+        elseif s * sign_condition > 0
+            return temporary_tensor_product(quad1d, box)
         else
-            if numperturbation >= maxperturbations
-                errorstr = "Failed to construct area quadrature after $numperturbation perturbations of size $perturbation"
-                error(errorstr)
-            else
-                perturbedfunc(x) = func(x) + perturbation
-                return subdivision_area_quadrature(
-                    perturbedfunc,
-                    grad,
-                    sign_condition,
-                    box,
-                    quad1d,
-                    recursionlevel,
-                    maxlevels,
-                    perturbation,
-                    numperturbation + 1,
-                    maxperturbations,
-                )
-            end
+            return cut_area_quadrature(
+                func,
+                grad,
+                sign_condition,
+                box,
+                quad1d,
+                recursionlevel,
+                maxlevels,
+                perturbation,
+                numperturbation,
+                maxperturbations,
+            )
         end
     end
 end
@@ -219,13 +188,14 @@ function area_quadrature(
     sign_condition,
     xL,
     xR,
-    quad1d;
+    numqp;
     maxlevels = 5,
     perturbation = 1e-2,
-    maxperturbations = 2,
 )
 
     box = IntervalBox(xL,xR)
+    quad1d = ReferenceQuadratureRule(numqp)
+
     tempquad = subdivision_area_quadrature(
         func,
         grad,
@@ -246,10 +216,8 @@ function area_quadrature(
     sign_condition,
     xL,
     xR,
-    quad1d;
+    numqp;
     maxlevels = 5,
-    perturbation = 1e-2,
-    maxperturbations = 2,
 ) where {NF,B,T}
 
     interpgrad = interpolating_gradient(poly)
@@ -259,9 +227,7 @@ function area_quadrature(
         sign_condition,
         xL,
         xR,
-        quad1d,
+        numqp,
         maxlevels = maxlevels,
-        perturbation = perturbation,
-        maxperturbations = maxperturbations,
     )
 end
