@@ -1,4 +1,5 @@
 using Test
+using LinearAlgebra
 using PolynomialBasis
 using Roots
 using IntervalArithmetic
@@ -72,23 +73,25 @@ surf_quad = IDQ.extend_edge_quadrature_to_surface_quadrature(
 
 
 f2(x) = x[2]
-quad1d = IDQ.ReferenceQuadratureRule(5)
+numqp = 5
+quad1d = IDQ.ReferenceQuadratureRule(numqp)
 xL, xR = [-1.0, -1.0], [1.0, 1.0]
 P = InterpolatingPolynomial(1, 2, 2)
 coeffs = [f2(P.basis.points[:, i]) for i = 1:size(P.basis.points)[2]]
 update!(P, coeffs)
-quad = IDQ.surface_quadrature(P, xL, xR, quad1d)
+quad = IDQ.surface_quadrature(P, xL, xR, numqp)
 p = IDQ.extend([0.0], 1, quad1d.points)
 @test allapprox(p, quad.points)
 @test allapprox(quad1d.weights, quad.weights)
 
 f2(x) = (x[2] - 0.5) * (x[2] + 0.75)
-quad1d = IDQ.ReferenceQuadratureRule(5)
+numqp = 5
+quad1d = IDQ.ReferenceQuadratureRule(numqp)
 xL, xR = [-1.0, -1.0], [1.0, 1.0]
 P = InterpolatingPolynomial(1, 2, 2)
 coeffs = [f2(P.basis.points[:, i]) for i = 1:size(P.basis.points)[2]]
 update!(P, coeffs)
-quad = IDQ.surface_quadrature(P, xL, xR, quad1d)
+quad = IDQ.surface_quadrature(P, xL, xR, numqp)
 
 function integrate(f, quad)
     s = 0.0
@@ -102,14 +105,21 @@ f(x) = (x[2] ≈ -0.75 || x[2] ≈ 0.5) ? 1.0 : 0.0
 s = integrate(f, quad)
 @test s ≈ 4.0
 
-f2(x) = (x[2] - 0.5) * (x[2] + 0.5)
-quad1d = IDQ.ReferenceQuadratureRule(5)
-xL, xR = [-1.0, -1.0], [1.0, 1.0]
-P = InterpolatingPolynomial(1, 2, 2)
-coeffs = [f2(P.basis.points[:, i]) for i = 1:size(P.basis.points)[2]]
-update!(P, coeffs)
-quad = IDQ.surface_quadrature(P, xL, xR, quad1d)
+function circle_distance_function(coords, center, radius)
+    npts = size(coords)[2]
+    return [norm(coords[:, i] - center) - radius for i = 1:npts]
+end
 
-f(x) = (isapprox(x[2], 0.5, atol = 2e-2) || isapprox(x[2], -0.5, atol = 2e-2)) ? 1.0 : 0.0
-s = integrate(f, quad)
-@test s ≈ 4.0
+radius = 0.5
+center = [0.0, 0.0]
+poly = InterpolatingPolynomial(1, 2, 3)
+numqp = 5
+xL, xR = [-1.0, -1.0], [1.0, 1.0]
+coeffs = circle_distance_function(poly.basis.points, center, radius)
+update!(poly, coeffs)
+squad = IDQ.surface_quadrature(poly, xL,xR, numqp)
+
+f(x) = isapprox(norm(x),radius,atol=1e-1) ? 1.0 : 0.0
+s = integrate(f,squad)
+@test isapprox(s,sum(squad.weights))
+@test isapprox(s,pi,atol=1e-1)

@@ -2,7 +2,7 @@ using Test
 using LinearAlgebra
 using IntervalArithmetic
 using PolynomialBasis
-using Revise
+# using Revise
 using ImplicitDomainQuadrature
 
 IDQ = ImplicitDomainQuadrature
@@ -51,47 +51,43 @@ xL, xR = [-1.0, -1.0], [1.0, 1.0]
 numqp = 2
 
 quad = area_quadrature(poly,-1,xL,xR,numqp)
-@test isapprox(sum(quad.weights), 4.0, atol = 5e-2)
+@test isapprox(sum(quad.weights), 4.0)
 
 quad = area_quadrature(poly,+1,xL,xR,numqp)
-@test isapprox(sum(quad.weights), 0.0, atol = 5e-2)
+@test isapprox(sum(quad.weights), 0.0, atol = 0.25)
 
 x0 = [1.0, 1.0]
 normal = [0.0, 1.0]
 coeffs = plane_distance_function(poly.basis.points, normal, x0)
 update!(poly, coeffs)
 
-quad = IDQ.area_quadrature(poly, x -> gradient(poly, x), +1, xL, xR, quad1d)
-@test isapprox(sum(quad.weights), 0.0, atol = 5e-2)
+quad = IDQ.area_quadrature(poly,+1, xL, xR, numqp)
+@test isapprox(sum(quad.weights), 0.0, atol = 0.25)
 
-quad = IDQ.area_quadrature(poly, x -> gradient(poly, x), -1, xL, xR, quad1d)
-@test isapprox(sum(quad.weights), 4.0, atol = 5e-2)
+quad = IDQ.area_quadrature(poly,-1, xL, xR, numqp)
+@test isapprox(sum(quad.weights), 4.0)
 
 x0 = [-1.0, 1.0]
 normal = [1.0, 0.0]
 coeffs = plane_distance_function(poly.basis.points, normal, x0)
 update!(poly, coeffs)
 
-quad = IDQ.area_quadrature(poly, x -> gradient(poly, x), +1, xL, xR, quad1d)
+quad = IDQ.area_quadrature(poly, +1, xL, xR, numqp)
+@test isapprox(sum(quad.weights), 4.0)
 
-@test isapprox(sum(quad.weights), 4.0, atol = 5e-2)
-
-quad = IDQ.area_quadrature(poly, x -> gradient(poly, x), -1, xL, xR, quad1d)
-
-@test isapprox(sum(quad.weights), 0.0, atol = 5e-2)
+quad = IDQ.area_quadrature(poly,-1, xL, xR, numqp)
+@test isapprox(sum(quad.weights), 0.0, atol = 0.25)
 
 x0 = [1.0, -1.0]
 normal = [0.0, 1.0]
 coeffs = plane_distance_function(poly.basis.points, normal, x0)
 update!(poly, coeffs)
 
-quad = IDQ.area_quadrature(poly, x -> gradient(poly, x), +1, xL, xR, quad1d)
+quad = IDQ.area_quadrature(poly,+1, xL, xR, numqp)
+@test isapprox(sum(quad.weights), 4.0)
 
-@test isapprox(sum(quad.weights), 4.0, atol = 5e-2)
-
-quad = IDQ.area_quadrature(poly, x -> gradient(poly, x), -1, xL, xR, quad1d)
-
-@test isapprox(sum(quad.weights), 0.0, atol = 5e-2)
+quad = IDQ.area_quadrature(poly, -1, xL, xR, numqp)
+@test isapprox(sum(quad.weights), 0.0, atol = 0.25)
 
 
 
@@ -104,8 +100,9 @@ coeffs = circle_distance_function(poly.basis.points, center, radius)
 update!(poly, coeffs)
 testarea = 4.0 - pi * 0.5^2
 
-quad = IDQ.area_quadrature(poly, +1, xL,xR, quad1d)
+numqp = 5
+quad = IDQ.area_quadrature(poly, +1, xL,xR, numqp)
 @test isapprox(sum(quad.weights), testarea, atol = 1e-1)
 
-squad = IDQ.surface_quadrature(poly, xL,xR, quad1d)
+squad = IDQ.surface_quadrature(poly, xL,xR, numqp)
 @test isapprox(sum(quad.weights), pi, atol = 1e-1)

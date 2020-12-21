@@ -161,11 +161,13 @@ function subdivision_area_quadrature(
         return TemporaryQuadrature(xc, wt)
     else
         s = sign(func, box)
-        if s * sign_condition < 0
-            return TemporaryQuadrature(T, 2)
-        elseif s * sign_condition > 0
-            return temporary_tensor_product(quad1d, box)
-        else
+        if s == +1 || s == -1
+            if s != sign_condition
+                return TemporaryQuadrature(T, 2)
+            else
+                return temporary_tensor_product(quad1d, box)
+            end
+        elseif s == 0
             return cut_area_quadrature(
                 func,
                 grad,
@@ -175,6 +177,20 @@ function subdivision_area_quadrature(
                 recursionlevel,
                 maxlevels,
             )
+        else
+            splitboxes = split_box(box)
+            splitquads = [
+                subdivision_area_quadrature(
+                    func,
+                    grad,
+                    sign_condition,
+                    sb,
+                    quad1d,
+                    recursionlevel + 1,
+                    maxlevels,
+                ) for sb in splitboxes
+            ]
+            return combine_quadratures(splitquads)
         end
     end
 end
@@ -198,7 +214,7 @@ function area_quadrature(
         sign_condition,
         box,
         quad1d,
-        1,
+        0,
         maxlevels,
     )
     return QuadratureRule(tempquad)

@@ -88,9 +88,6 @@ function cut_surface_quadrature(
     quad1d,
     recursionlevel,
     maxlevels,
-    perturbation,
-    numperturbation,
-    maxperturbations,
 )
 
     heightdir = height_direction(grad, box)
@@ -105,9 +102,6 @@ function cut_surface_quadrature(
                 quad1d,
                 recursionlevel + 1,
                 maxlevels,
-                perturbation,
-                numperturbation,
-                maxperturbations,
             ) for sb in splitboxes
         ]
         return combine_quadratures(splitquads)
@@ -144,9 +138,6 @@ function subdivision_surface_quadrature(
     quad1d::ReferenceQuadratureRule{T},
     recursionlevel,
     maxlevels,
-    perturbation,
-    numperturbation,
-    maxperturbations,
 ) where {T}
 
     if recursionlevel >= maxlevels
@@ -164,29 +155,21 @@ function subdivision_surface_quadrature(
                     quad1d,
                     recursionlevel,
                     maxlevels,
-                    perturbation,
-                    numperturbation,
-                    maxperturbations,
                 )
             end
         else
-            if numperturbation >= maxperturbations
-                errorstr = "Failed to construct surface quadrature after $numperturbation perturbations of size $perturbation"
-                error(errorstr)
-            else
-                perturbedfunc(x) = func(x) + perturbation
-                return subdivision_surface_quadrature(
-                    perturbedfunc,
+            splitboxes = split_box(box)
+            splitquads = [
+                subdivision_surface_quadrature(
+                    func,
                     grad,
-                    box,
+                    sb,
                     quad1d,
-                    recursionlevel,
+                    recursionlevel + 1,
                     maxlevels,
-                    perturbation,
-                    numperturbation + 1,
-                    maxperturbations,
-                )
-            end
+                ) for sb in splitboxes
+            ]
+            return combine_quadratures(splitquads)
         end
     end
 end
@@ -196,23 +179,20 @@ function surface_quadrature(
     grad,
     xL,
     xR,
-    quad1d;
+    numqp;
     maxlevels = 5,
-    perturbation = 1e-2,
-    maxperturbations = 2,
 )
 
     box = IntervalBox(xL,xR)
+    quad1d = ReferenceQuadratureRule(numqp)
+
     tempquad = subdivision_surface_quadrature(
         func,
         grad,
         box,
         quad1d,
-        1,
-        maxlevels,
-        perturbation,
         0,
-        maxperturbations,
+        maxlevels,
     )
     return QuadratureRule(tempquad)
 end
@@ -223,8 +203,6 @@ function surface_quadrature(
     xR,
     quad1d;
     maxlevels = 5,
-    perturbation = 1e-2,
-    maxperturbations = 2,
 )
 
     interpgrad = interpolating_gradient(poly)
@@ -235,7 +213,5 @@ function surface_quadrature(
         xR,
         quad1d,
         maxlevels = maxlevels,
-        perturbation = perturbation,
-        maxperturbations = maxperturbations,
     )
 end
