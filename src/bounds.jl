@@ -100,7 +100,7 @@ end
 function Base.sign(P::InterpolatingPolynomial{1}, xL, xR; tol = 1e-3, perturbation = 0.0)
 
     max_coeff, min_coeff = extremal_coeffs_in_box(P, xL, xR)
-    if max_coeff >= 0 && min_coeff <= 0
+    if max_coeff > 0 && min_coeff < 0
         return 0
     else
         box = IntervalBox(xL, xR)
