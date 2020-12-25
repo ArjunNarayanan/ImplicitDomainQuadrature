@@ -10,35 +10,56 @@ xL, xR = IDQ.corners(box)
 @test all(xL .≈ [1.0, 2.0])
 @test all(xR .≈ [3.0, 5.0])
 
-b1, b2, b3, b4 = IDQ.split_box(box)
+b1, b2, b3, b4 = IDQ.split_box(box,2)
 testb1 = IntervalBox([1.0, 2], [2, 3.5])
 testb2 = IntervalBox([2.0, 2], [3, 3.5])
-testb3 = IntervalBox([2.0, 3.5], [3.0, 5])
-testb4 = IntervalBox([1.0, 3.5], [2, 5.0])
+testb3 = IntervalBox([1.0, 3.5], [2, 5.0])
+testb4 = IntervalBox([2.0, 3.5], [3.0, 5])
 @test b1 == testb1
 @test b2 == testb2
 @test b3 == testb3
 @test b4 == testb4
+
+box = IntervalBox([0.,0.],[3.,3.])
+b1,b2,b3,b4,b5,b6,b7,b8,b9 = IDQ.split_box(box,3)
+testb1 = IntervalBox([0.,0.],[1.,1.])
+testb2 = IntervalBox([1.,0.],[2.,1.])
+testb3 = IntervalBox([2.,0.],[3.,1.])
+testb4 = IntervalBox([0.,1.],[1.,2.])
+testb5 = IntervalBox([1.,1.],[2.,2.])
+testb6 = IntervalBox([2.,1.],[3.,2.])
+testb7 = IntervalBox([0.,2.],[1.,3.])
+testb8 = IntervalBox([1.,2.],[2.,3.])
+testb9 = IntervalBox([2.,2.],[3.,3.])
+@test b1 == testb1
+@test b2 == testb2
+@test b3 == testb3
+@test b4 == testb4
+@test b5 == testb5
+@test b6 == testb6
+@test b7 == testb7
+@test b8 == testb8
+@test b9 == testb9
 
 box = IntervalBox(0..1, 0..2, 0..5)
 @test IDQ.min_diam(box) ≈ 1.0
 
 f(x) = x[1] + 1
 box = IntervalBox(-1..1, 1)
-s = IDQ.interval_arithmetic_sign_search(f, box, 1e-2,0.0)
+s = IDQ.interval_arithmetic_sign_search(f, box, 1e-2,0.0,2)
 @test !(s == 0 || s == 1 || s == -1)
 
 f(x) = x[1] + 2
 box = IntervalBox(-1..1, 1)
-@test IDQ.interval_arithmetic_sign_search(f, box, 1e-2,0.0) == 1
+@test IDQ.interval_arithmetic_sign_search(f, box, 1e-2,0.0,2) == 1
 
 f(x) = x[1] - 2
 box = IntervalBox(-1..1, 1)
-@test IDQ.interval_arithmetic_sign_search(f, box, 1e-2,0.0) == -1
+@test IDQ.interval_arithmetic_sign_search(f, box, 1e-2,0.0,2) == -1
 
 f(x) = x[1]
 box = IntervalBox(-1..1, 1)
-@test IDQ.interval_arithmetic_sign_search(f, box, 1e-2,0.0) == 0
+@test IDQ.interval_arithmetic_sign_search(f, box, 1e-2,0.0,2) == 0
 @test sign(f, [-1.], [1.], tol = 1e-2) == 0
 
 f(x) = x[1] * (x[1] - 0.1) * (x[1] - 1.0)

@@ -98,11 +98,12 @@ function cut_area_quadrature(
     quad1d,
     recursionlevel,
     maxlevels,
+    numsplits,
 )
     heightdir = height_direction(grad, box)
     issuitable, gradsign = is_suitable(heightdir, grad, box)
     if !issuitable
-        splitboxes = split_box(box)
+        splitboxes = split_box(box, numsplits)
         splitquads = [
             subdivision_area_quadrature(
                 func,
@@ -112,6 +113,7 @@ function cut_area_quadrature(
                 quad1d,
                 recursionlevel + 1,
                 maxlevels,
+                numsplits,
             ) for sb in splitboxes
         ]
         return combine_quadratures(splitquads)
@@ -151,6 +153,7 @@ function subdivision_area_quadrature(
     quad1d::ReferenceQuadratureRule{T},
     recursionlevel,
     maxlevels,
+    numsplits,
 ) where {T}
 
     @assert sign_condition == +1 || sign_condition == -1
@@ -176,9 +179,10 @@ function subdivision_area_quadrature(
                 quad1d,
                 recursionlevel,
                 maxlevels,
+                numsplits,
             )
         else
-            splitboxes = split_box(box)
+            splitboxes = split_box(box, numsplits)
             splitquads = [
                 subdivision_area_quadrature(
                     func,
@@ -188,6 +192,7 @@ function subdivision_area_quadrature(
                     quad1d,
                     recursionlevel + 1,
                     maxlevels,
+                    numsplits,
                 ) for sb in splitboxes
             ]
             return combine_quadratures(splitquads)
@@ -203,9 +208,10 @@ function area_quadrature(
     xR,
     numqp;
     maxlevels = 5,
+    numsplits = 2,
 )
 
-    box = IntervalBox(xL,xR)
+    box = IntervalBox(xL, xR)
     quad1d = ReferenceQuadratureRule(numqp)
 
     tempquad = subdivision_area_quadrature(
@@ -216,6 +222,7 @@ function area_quadrature(
         quad1d,
         0,
         maxlevels,
+        numsplits,
     )
     return QuadratureRule(tempquad)
 end
@@ -227,6 +234,7 @@ function area_quadrature(
     xR,
     numqp;
     maxlevels = 5,
+    numsplits = 2,
 ) where {NF,B,T}
 
     interpgrad = interpolating_gradient(poly)
@@ -238,5 +246,6 @@ function area_quadrature(
         xR,
         numqp,
         maxlevels = maxlevels,
+        numsplits = numsplits,
     )
 end

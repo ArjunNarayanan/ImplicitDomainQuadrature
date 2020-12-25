@@ -22,7 +22,7 @@ function extend_edge_quadrature_to_surface_quadrature(
         w = w0 * jac
         return p, w
     else
-        return nothing,nothing
+        return nothing, nothing
     end
 end
 
@@ -88,12 +88,13 @@ function cut_surface_quadrature(
     quad1d,
     recursionlevel,
     maxlevels,
+    numsplits,
 )
 
     heightdir = height_direction(grad, box)
     issuitable, gradsign = is_suitable(heightdir, grad, box)
     if !issuitable
-        splitboxes = split_box(box)
+        splitboxes = split_box(box, numsplits)
         splitquads = [
             subdivision_surface_quadrature(
                 func,
@@ -102,6 +103,7 @@ function cut_surface_quadrature(
                 quad1d,
                 recursionlevel + 1,
                 maxlevels,
+                numsplits,
             ) for sb in splitboxes
         ]
         return combine_quadratures(splitquads)
@@ -138,6 +140,7 @@ function subdivision_surface_quadrature(
     quad1d::ReferenceQuadratureRule{T},
     recursionlevel,
     maxlevels,
+    numsplits,
 ) where {T}
 
     if recursionlevel >= maxlevels
@@ -155,10 +158,11 @@ function subdivision_surface_quadrature(
                     quad1d,
                     recursionlevel,
                     maxlevels,
+                    numsplits,
                 )
             end
         else
-            splitboxes = split_box(box)
+            splitboxes = split_box(box, numsplits)
             splitquads = [
                 subdivision_surface_quadrature(
                     func,
@@ -167,6 +171,7 @@ function subdivision_surface_quadrature(
                     quad1d,
                     recursionlevel + 1,
                     maxlevels,
+                    numsplits,
                 ) for sb in splitboxes
             ]
             return combine_quadratures(splitquads)
@@ -174,26 +179,13 @@ function subdivision_surface_quadrature(
     end
 end
 
-function surface_quadrature(
-    func,
-    grad,
-    xL,
-    xR,
-    numqp;
-    maxlevels = 5,
-)
+function surface_quadrature(func, grad, xL, xR, numqp; maxlevels = 5, numsplits = 2)
 
-    box = IntervalBox(xL,xR)
+    box = IntervalBox(xL, xR)
     quad1d = ReferenceQuadratureRule(numqp)
 
-    tempquad = subdivision_surface_quadrature(
-        func,
-        grad,
-        box,
-        quad1d,
-        0,
-        maxlevels,
-    )
+    tempquad =
+        subdivision_surface_quadrature(func, grad, box, quad1d, 0, maxlevels, numsplits)
     return QuadratureRule(tempquad)
 end
 
@@ -203,6 +195,7 @@ function surface_quadrature(
     xR,
     quad1d;
     maxlevels = 5,
+    numsplits = 2,
 )
 
     interpgrad = interpolating_gradient(poly)
@@ -213,5 +206,6 @@ function surface_quadrature(
         xR,
         quad1d,
         maxlevels = maxlevels,
+        numsplits = numsplits,
     )
 end

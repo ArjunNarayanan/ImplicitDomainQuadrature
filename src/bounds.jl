@@ -4,25 +4,15 @@ function corners(box::IntervalBox{2,T}) where {T}
     return xL, xR
 end
 
-function split_box(box::IntervalBox{1,T}) where {T}
-    return bisect(box, 0.5)
-end
-
-function split_box(box::IntervalBox{2,T}) where {T}
-    xL, xR = corners(box)
-    xM = 0.5 * (xL + xR)
-    b1 = IntervalBox(xL, xM)
-    b2 = IntervalBox([xM[1], xL[2]], [xR[1], xM[2]])
-    b3 = IntervalBox(xM, xR)
-    b4 = IntervalBox([xL[1], xM[2]], [xM[1], xR[2]])
-    return b1, b2, b3, b4
+function split_box(box,numsplits)
+    return mince(box,numsplits)
 end
 
 function min_diam(box)
     return minimum(diam.(box))
 end
 
-function interval_arithmetic_sign_search(func, initialbox, tol, perturbation)
+function interval_arithmetic_sign_search(func, initialbox, tol, perturbation, numsplits)
 
     rtol = tol * diam(initialbox)
 
@@ -44,7 +34,7 @@ function interval_arithmetic_sign_search(func, initialbox, tol, perturbation)
             elseif sup(funcrange) < perturbation
                 foundneg = true
             else
-                newboxes = split_box(box)
+                newboxes = split_box(box,numsplits)
                 push!(queue, newboxes...)
             end
         end
@@ -64,8 +54,8 @@ function interval_arithmetic_sign_search(func, initialbox, tol, perturbation)
 end
 
 
-function Base.sign(func, box; tol = 1e-3, perturbation = 0.0)
-    return interval_arithmetic_sign_search(func, box, tol, perturbation)
+function Base.sign(func, box; tol = 1e-3, perturbation = 0.0, numsplits = 2)
+    return interval_arithmetic_sign_search(func, box, tol, perturbation, numsplits)
 end
 """
     sign(f, box)
@@ -74,9 +64,9 @@ return
 - `-1` if `f` is uniformly negative on `int`
 - `0` if `f` has at least one zero crossing in `int` (f assumed continuous)
 """
-function Base.sign(func, xL, xR; tol = 1e-3, perturbation = 0.0)
+function Base.sign(func, xL, xR; tol = 1e-3, perturbation = 0.0, numsplits = 2)
     box = IntervalBox(xL, xR)
-    return sign(func, box; tol = tol, perturbation = perturbation)
+    return sign(func, box; tol = tol, perturbation = perturbation, numsplits = numsplits)
 end
 
 function extremal_coeffs_in_box(poly, xL, xR)
@@ -97,14 +87,14 @@ function extremal_coeffs_in_box(poly, xL, xR)
 end
 
 
-function Base.sign(P::InterpolatingPolynomial{1}, xL, xR; tol = 1e-3, perturbation = 0.0)
+function Base.sign(P::InterpolatingPolynomial{1}, xL, xR; tol = 1e-3, perturbation = 0.0, numsplits = 2)
 
     max_coeff, min_coeff = extremal_coeffs_in_box(P, xL, xR)
     if max_coeff > 0 && min_coeff < 0
         return 0
     else
         box = IntervalBox(xL, xR)
-        return interval_arithmetic_sign_search(P, box, tol, perturbation)
+        return interval_arithmetic_sign_search(P, box, tol, perturbation,numsplits)
     end
 end
 

@@ -2,7 +2,7 @@ using Test
 using LinearAlgebra
 using PolynomialBasis
 using IntervalArithmetic
-# using Revise
+using Revise
 using ImplicitDomainQuadrature
 
 IDQ = ImplicitDomainQuadrature
@@ -30,7 +30,7 @@ polyorder = 2
 numqp = 5
 poly = InterpolatingPolynomial(1,2,polyorder)
 coeffs = corner_distance_function(poly.basis.points,corner)
-update!(poly,coeffs .+ 0.01)
+update!(poly,coeffs .+ 1e-3)
 
 quad = area_quadrature(poly,+1,[-1.,-1.],[1.,1.],numqp)
 squad = surface_quadrature(poly,[-1.,-1.],[1.,1.],numqp)
