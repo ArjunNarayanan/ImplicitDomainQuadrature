@@ -30,10 +30,10 @@ polyorder = 2
 numqp = 5
 poly = InterpolatingPolynomial(1,2,polyorder)
 coeffs = corner_distance_function(poly.basis.points,corner)
-update!(poly,coeffs .+ 1e-3)
+update!(poly,coeffs)
 
-quad = area_quadrature(poly,+1,[-1.,-1.],[1.,1.],numqp)
-squad = surface_quadrature(poly,[-1.,-1.],[1.,1.],numqp)
+quad = area_quadrature(poly,+1,[-1.,-1.],[1.,1.],numqp,numsplits=3)
+squad = surface_quadrature(poly,[-1.,-1.],[1.,1.],numqp,numsplits=3)
 
 using Plots
 xrange = -1:1e-2:1

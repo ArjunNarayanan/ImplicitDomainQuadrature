@@ -144,7 +144,7 @@ function subdivision_surface_quadrature(
 ) where {T}
 
     if recursionlevel >= maxlevels
-        error("Failed to construct an appropriate surface integration rule")
+        error("Failed to construct an appropriate surface integration rule after $maxlevels subdivisions")
     else
         s = sign(func, box)
         if s == -1 || s == 0 || s == +1

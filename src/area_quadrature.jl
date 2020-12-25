@@ -159,9 +159,10 @@ function subdivision_area_quadrature(
     @assert sign_condition == +1 || sign_condition == -1
 
     if recursionlevel >= maxlevels
-        xc = reshape(mid(box), 2, 1)
-        wt = [area(box)]
-        return TemporaryQuadrature(xc, wt)
+        error("Failed to construct an appropriate area integration rule after $maxlevels subdivisions")
+        # xc = reshape(mid(box), 2, 1)
+        # wt = [area(box)]
+        # return TemporaryQuadrature(xc, wt)
     else
         s = sign(func, box)
         if s == +1 || s == -1
