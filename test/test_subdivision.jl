@@ -41,56 +41,6 @@ function PolynomialBasis.gradient(f::FunctionAndGradient, x)
     return f.grad(x)
 end
 
-poly = InterpolatingPolynomial(1, 2, 2)
-x0 = [1.0, 0.0]
-normal = [1.0, 0.0]
-coeffs = plane_distance_function(poly.basis.points, normal, x0)
-update!(poly, coeffs)
-
-xL, xR = [-1.0, -1.0], [1.0, 1.0]
-numqp = 2
-
-quad = area_quadrature(poly,-1,xL,xR,numqp)
-@test isapprox(sum(quad.weights), 4.0)
-
-quad = area_quadrature(poly,+1,xL,xR,numqp)
-@test isapprox(sum(quad.weights), 0.0, atol = 0.25)
-
-x0 = [1.0, 1.0]
-normal = [0.0, 1.0]
-coeffs = plane_distance_function(poly.basis.points, normal, x0)
-update!(poly, coeffs)
-
-quad = IDQ.area_quadrature(poly,+1, xL, xR, numqp)
-@test isapprox(sum(quad.weights), 0.0, atol = 0.25)
-
-quad = IDQ.area_quadrature(poly,-1, xL, xR, numqp)
-@test isapprox(sum(quad.weights), 4.0)
-
-x0 = [-1.0, 1.0]
-normal = [1.0, 0.0]
-coeffs = plane_distance_function(poly.basis.points, normal, x0)
-update!(poly, coeffs)
-
-quad = IDQ.area_quadrature(poly, +1, xL, xR, numqp)
-@test isapprox(sum(quad.weights), 4.0)
-
-quad = IDQ.area_quadrature(poly,-1, xL, xR, numqp)
-@test isapprox(sum(quad.weights), 0.0, atol = 0.25)
-
-x0 = [1.0, -1.0]
-normal = [0.0, 1.0]
-coeffs = plane_distance_function(poly.basis.points, normal, x0)
-update!(poly, coeffs)
-
-quad = IDQ.area_quadrature(poly,+1, xL, xR, numqp)
-@test isapprox(sum(quad.weights), 4.0)
-
-quad = IDQ.area_quadrature(poly, -1, xL, xR, numqp)
-@test isapprox(sum(quad.weights), 0.0, atol = 0.25)
-
-
-
 #######################################################################
 # Test a curved interface and subdivision
 radius = 0.5
