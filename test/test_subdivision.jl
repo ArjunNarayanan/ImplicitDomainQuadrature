@@ -50,6 +50,8 @@ coeffs = circle_distance_function(poly.basis.points, center, radius)
 update!(poly, coeffs)
 testarea = 4.0 - pi * 0.5^2
 
+xL,xR = [-1.0,-1.0],[1.,1.]
+
 numqp = 5
 quad = IDQ.area_quadrature(poly, +1, xL,xR, numqp)
 @test isapprox(sum(quad.weights), testarea, atol = 1e-1)
