@@ -66,7 +66,7 @@ function is_suitable(
     box;
     tol = 1e-3,
     C = 4,
-    perturbation = 1e-2,
+    perturbation = 0.0,
 )
 
     if height_dir == 0

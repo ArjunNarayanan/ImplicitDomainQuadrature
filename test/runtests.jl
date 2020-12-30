@@ -24,6 +24,6 @@ end
     include("test_surface_quadrature.jl")
 end
 
-@safetestset "Test Subdivision & Perturbation Algorithm" begin
+@safetestset "Test Subdivision Algorithm" begin
     include("test_subdivision.jl")
 end
