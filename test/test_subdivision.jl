@@ -46,15 +46,17 @@ end
 radius = 0.5
 center = [0.0, 0.0]
 poly = InterpolatingPolynomial(1, 2, 3)
+dpoly = InterpolatingPolynomial(2, 2, 3)
 coeffs = circle_distance_function(poly.basis.points, center, radius)
 update!(poly, coeffs)
+update_interpolating_gradient!(dpoly,poly)
 testarea = 4.0 - pi * 0.5^2
 
 xL,xR = [-1.0,-1.0],[1.,1.]
 
 numqp = 5
-quad = IDQ.area_quadrature(poly, +1, xL,xR, numqp)
+quad = IDQ.area_quadrature(poly,dpoly, +1, xL,xR, numqp)
 @test isapprox(sum(quad.weights), testarea, atol = 1e-1)
 
-squad = IDQ.surface_quadrature(poly, xL,xR, numqp)
+squad = IDQ.surface_quadrature(poly,dpoly, xL,xR, numqp)
 @test isapprox(sum(quad.weights), pi, atol = 1e-1)

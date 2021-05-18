@@ -228,25 +228,26 @@ function area_quadrature(
     return QuadratureRule(tempquad)
 end
 
-function area_quadrature(
-    poly::InterpolatingPolynomial{1},
-    sign_condition,
-    xL,
-    xR,
-    numqp;
-    maxlevels = 5,
-    numsplits = 2,
-) where {NF,B,T}
-
-    interpgrad = interpolating_gradient(poly)
-    return area_quadrature(
-        poly,
-        interpgrad,
-        sign_condition,
-        xL,
-        xR,
-        numqp,
-        maxlevels = maxlevels,
-        numsplits = numsplits,
-    )
-end
+# function area_quadrature(
+#     poly::InterpolatingPolynomial{1},
+#     interpgrad,
+#     sign_condition,
+#     xL,
+#     xR,
+#     numqp;
+#     maxlevels = 5,
+#     numsplits = 2,
+# ) where {NF,B,T}
+#
+#     update_interpolating_gradient!(interpgrad,poly)
+#     return area_quadrature(
+#         poly,
+#         interpgrad,
+#         sign_condition,
+#         xL,
+#         xR,
+#         numqp,
+#         maxlevels = maxlevels,
+#         numsplits = numsplits,
+#     )
+# end

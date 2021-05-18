@@ -5,11 +5,10 @@ using IntervalArithmetic
 using ImplicitDomainQuadrature
 
 IDQ = ImplicitDomainQuadrature
+PB = PolynomialBasis
 
-function allapprox(v1, v2; tol = 1e-14)
-    @assert length(v1) == length(v2)
-    flags = [isapprox(v1[i], v2[i], atol = tol) for i = 1:length(v1)]
-    return all(flags)
+function allapprox(v1, v2)
+    return all(v1 .≈ v2)
 end
 
 f(x) = (x - 1.0) * (x - 1.5)
@@ -75,3 +74,47 @@ flag, s = IDQ.is_suitable(2, x -> gradient(P, x), box)
 @test IDQ.sign(1, 1, true, -1) == -1
 @test IDQ.sign(1, -1, false, -1) == -1
 @test IDQ.sign(1, -1, false, 1) == 0
+
+
+
+
+function testcubic(coeffs, v)
+    a, b, c, d, e, f, g, h, i, j = coeffs
+    x, y = v
+    return a * x^3 +
+           b * x^2 * y +
+           c * x * y^2 +
+           d * y^3 +
+           e * x^2 +
+           f * x * y +
+           g * y^2 +
+           h * x +
+           i * y +
+           j
+end
+
+function testcubicgrad(coeffs, v)
+    a, b, c, d, e, f, g, h, i, j = coeffs
+    x, y = v
+
+    fx = 3 * a * x^2 + 2 * b * x * y + c * y^2 + 2 * e * x + f * y + h
+    fy = b * x^2 + 2 * c * x * y + 3 * d * y^2 + f * x + 2 * g * y + i
+    return [fx, fy]
+end
+
+coeffs = [10,12,6,17,9,5,2,1,8,11.0]
+poly = InterpolatingPolynomial(1,2,3)
+points = PolynomialBasis.interpolation_points(PolynomialBasis.basis(poly))
+interpcoeffs = vec(mapslices(x->testcubic(coeffs,x),points,dims=1))
+update!(poly,interpcoeffs)
+
+testp = rand(2,10)
+vals = mapslices(poly,testp,dims=1)
+testvals = mapslices(x->testcubic(coeffs,x),testp,dims=1)
+@test allapprox(vals,testvals)
+
+interpgrad = InterpolatingPolynomial(2,2,3)
+IDQ.update_interpolating_gradient!(interpgrad,poly)
+vals = mapslices(interpgrad,testp,dims=1)
+testvals = mapslices(x->testcubicgrad(coeffs,x),testp,dims=1)
+@test allapprox(vals,testvals)

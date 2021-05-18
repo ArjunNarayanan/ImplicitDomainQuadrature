@@ -77,9 +77,11 @@ numqp = 5
 quad1d = IDQ.ReferenceQuadratureRule(numqp)
 xL, xR = [-1.0, -1.0], [1.0, 1.0]
 P = InterpolatingPolynomial(1, 2, 2)
+dP = InterpolatingPolynomial(2, 2, 2)
 coeffs = [f2(P.basis.points[:, i]) for i = 1:size(P.basis.points)[2]]
 update!(P, coeffs)
-quad = IDQ.surface_quadrature(P, xL, xR, numqp)
+update_interpolating_gradient!(dP,P)
+quad = IDQ.surface_quadrature(P,dP, xL, xR, numqp)
 p = IDQ.extend([0.0], 1, quad1d.points)
 @test allapprox(p, quad.points)
 @test allapprox(quad1d.weights, quad.weights)
@@ -89,9 +91,11 @@ numqp = 5
 quad1d = IDQ.ReferenceQuadratureRule(numqp)
 xL, xR = [-1.0, -1.0], [1.0, 1.0]
 P = InterpolatingPolynomial(1, 2, 2)
+dP = InterpolatingPolynomial(2, 2, 2)
 coeffs = [f2(P.basis.points[:, i]) for i = 1:size(P.basis.points)[2]]
 update!(P, coeffs)
-quad = IDQ.surface_quadrature(P, xL, xR, numqp)
+update_interpolating_gradient!(dP,P)
+quad = IDQ.surface_quadrature(P, dP, xL, xR, numqp)
 
 function integrate(f, quad)
     s = 0.0
@@ -113,11 +117,13 @@ end
 radius = 0.5
 center = [0.0, 0.0]
 poly = InterpolatingPolynomial(1, 2, 3)
+dpoly = InterpolatingPolynomial(2, 2, 3)
 numqp = 5
 xL, xR = [-1.0, -1.0], [1.0, 1.0]
 coeffs = circle_distance_function(poly.basis.points, center, radius)
 update!(poly, coeffs)
-squad = IDQ.surface_quadrature(poly, xL,xR, numqp)
+update_interpolating_gradient!(dpoly,poly)
+squad = IDQ.surface_quadrature(poly,dpoly, xL,xR, numqp)
 
 f(x) = isapprox(norm(x),radius,atol=1e-1) ? 1.0 : 0.0
 s = integrate(f,squad)

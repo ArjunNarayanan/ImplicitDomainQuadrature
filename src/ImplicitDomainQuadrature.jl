@@ -18,6 +18,7 @@ export sign_allow_perturbations,
     surface_quadrature,
     tensor_product_quadrature,
     QuadratureRule,
-    ReferenceQuadratureRule
+    ReferenceQuadratureRule,
+    update_interpolating_gradient!
 
 end # module

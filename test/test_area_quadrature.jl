@@ -118,9 +118,11 @@ numqp = 5
 quad1d = IDQ.ReferenceQuadratureRule(numqp)
 xL, xR = [-1.0, -1.0], [1.0, 1.0]
 P = InterpolatingPolynomial(1, 2, 2)
+interpgrad = InterpolatingPolynomial(2,2,2)
 coeffs = [f2(P.basis.points[:, i]) for i = 1:size(P.basis.points)[2]]
 update!(P, coeffs)
-quad = IDQ.area_quadrature(P, +1, xL, xR, numqp)
+update_interpolating_gradient!(interpgrad,P)
+quad = IDQ.area_quadrature(P, interpgrad, +1, xL, xR, numqp)
 p, w = IDQ.transform(quad1d, 0.0, 1.0)
 p2 = hcat([IDQ.extend([quad1d.points[i]], 2, p) for i = 1:5]...)
 w2 = vcat([quad1d.weights[i] * w for i = 1:5]...)
@@ -133,9 +135,11 @@ numqp = 5
 quad1d = IDQ.ReferenceQuadratureRule(numqp)
 xL, xR = [-1.0, -1.0], [1.0, 1.0]
 P = InterpolatingPolynomial(1, 2, 2)
+dP = InterpolatingPolynomial(2, 2, 2)
 coeffs = [f2(P.basis.points[:, i]) for i = 1:size(P.basis.points)[2]]
 update!(P, coeffs)
-quad = IDQ.area_quadrature(P, -1, xL, xR, numqp)
+update_interpolating_gradient!(dP,P)
+quad = IDQ.area_quadrature(P,dP, -1, xL, xR, numqp)
 @test size(quad.points) == (2, 0)
 @test length(quad.weights) == 0
 
@@ -144,9 +148,11 @@ numqp = 5
 quad1d = IDQ.ReferenceQuadratureRule(numqp)
 xL, xR = [-1.0, -1.0], [1.0, 1.0]
 P = InterpolatingPolynomial(1, 2, 2)
+dP = InterpolatingPolynomial(2, 2, 2)
 coeffs = [f2(P.basis.points[:, i]) for i = 1:size(P.basis.points)[2]]
 update!(P, coeffs)
-quad = IDQ.area_quadrature(P, +1, xL, xR, numqp)
+update_interpolating_gradient!(dP,P)
+quad = IDQ.area_quadrature(P,dP, +1, xL, xR, numqp)
 p = hcat([IDQ.extend([quad1d.points[i]], 2, quad1d.points) for i = 1:5]...)
 w = vcat([quad1d.weights[i] * quad1d.weights for i = 1:5]...)
 @test allapprox(quad.points, p)

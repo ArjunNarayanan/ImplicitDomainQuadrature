@@ -188,24 +188,3 @@ function surface_quadrature(func, grad, xL, xR, numqp; maxlevels = 5, numsplits 
         subdivision_surface_quadrature(func, grad, box, quad1d, 0, maxlevels, numsplits)
     return QuadratureRule(tempquad)
 end
-
-function surface_quadrature(
-    poly::InterpolatingPolynomial,
-    xL,
-    xR,
-    quad1d;
-    maxlevels = 5,
-    numsplits = 2,
-)
-
-    interpgrad = interpolating_gradient(poly)
-    return surface_quadrature(
-        poly,
-        interpgrad,
-        xL,
-        xR,
-        quad1d,
-        maxlevels = maxlevels,
-        numsplits = numsplits,
-    )
-end

@@ -40,7 +40,11 @@ function extend(x0::V, k, x::M) where {V<:AbstractVector,M<:AbstractMatrix}
     elseif old_dim == 1 && k == 2
         return vcat(old_row, x)
     else
-        throw(ArgumentError("Current support for dim = 1 and k ∈ {1,2}, got dim = $dim, k = $k"))
+        throw(
+            ArgumentError(
+                "Current support for dim = 1 and k ∈ {1,2}, got dim = $dim, k = $k",
+            ),
+        )
     end
 end
 function height_direction(grad, xc)
@@ -73,12 +77,7 @@ function is_suitable(
         return false, 0
     else
         gradk(x) = grad(x)[height_dir]
-        s = sign(
-            gradk,
-            box,
-            tol = tol,
-            perturbation = perturbation,
-        )
+        s = sign(gradk, box, tol = tol, perturbation = perturbation)
         curvatureflag = true
         if s != 0
             curve(x) = curvature_measure(grad(x), height_dir, C)
@@ -105,12 +104,8 @@ function combine_quadratures(splitquads)
     return TemporaryQuadrature(points, weights)
 end
 
-function interpolating_gradient(poly::InterpolatingPolynomial{1,B,T}) where {B,T}
-    @assert PolynomialBasis.dimension(poly) == 2
-    points = poly.basis.points
-    interpvals = hcat([gradient(poly,points[:,i])' for i = 1:size(points)[2]]...)
-
-    interpgrad = InterpolatingPolynomial(2,poly.basis)
-    PolynomialBasis.update!(interpgrad,interpvals)
-    return interpgrad
+function update_interpolating_gradient!(interpgrad, poly)
+    points = interpolation_points(basis(interpgrad))
+    interpvals = mapslices(x -> vec(gradient(poly, x)), points, dims = 1)
+    PolynomialBasis.update!(interpgrad, interpvals)
 end
