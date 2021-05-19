@@ -185,7 +185,7 @@ uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 
 [[PolynomialBasis]]
 deps = ["DynamicPolynomials", "LinearAlgebra", "StaticPolynomials"]
-git-tree-sha1 = "05c761668ebea29052ca8f49f910355802103031"
+git-tree-sha1 = "070132e7b9758e0927d809e02b4bc9dceeff2948"
 repo-rev = "master"
 repo-url = "https://github.com/ArjunNarayanan/PolynomialBasis.jl.git"
 uuid = "776a168a-1973-4f1d-bada-3c06b642fffd"
