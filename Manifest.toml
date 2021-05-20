@@ -184,8 +184,10 @@ deps = ["Artifacts", "Dates", "Downloads", "LibGit2", "Libdl", "Logging", "Markd
 uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 
 [[PolynomialBasis]]
-deps = ["DynamicPolynomials", "LinearAlgebra", "StaticPolynomials"]
-path = "C:\\Users\\arjun\\.julia\\dev\\PolynomialBasis"
+deps = ["DynamicPolynomials", "StaticPolynomials"]
+git-tree-sha1 = "c34ebc24ba5127917ebe7797fb188d13fbcda068"
+repo-rev = "master"
+repo-url = "https://github.com/ArjunNarayanan/PolynomialBasis.jl.git"
 uuid = "776a168a-1973-4f1d-bada-3c06b642fffd"
 version = "0.1.0"
 
@@ -252,9 +254,9 @@ uuid = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [[SpecialFunctions]]
 deps = ["ChainRulesCore", "LogExpFunctions", "OpenSpecFun_jll"]
-git-tree-sha1 = "9146da51b38e9705b9f5ccfadc3ab10a482cae36"
+git-tree-sha1 = "c467f25b6ec4167ea3a9a4351c66c2e1cba5da33"
 uuid = "276daf66-3868-5448-9aa4-cd146d93841b"
-version = "1.4.0"
+version = "1.4.1"
 
 [[StaticArrays]]
 deps = ["LinearAlgebra", "Random", "Statistics"]

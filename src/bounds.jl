@@ -4,15 +4,21 @@ function corners(box::IntervalBox{2,T}) where {T}
     return xL, xR
 end
 
-function split_box(box,numsplits)
-    return mince(box,numsplits)
+function split_box(box, numsplits)
+    return mince(box, numsplits)
 end
 
 function min_diam(box)
     return minimum(diam.(box))
 end
 
-function interval_arithmetic_sign_search(func, initialbox, tol, perturbation, numsplits)
+function interval_arithmetic_sign_search(
+    func,
+    initialbox,
+    tol,
+    perturbation,
+    numsplits,
+)
 
     rtol = tol * diam(initialbox)
 
@@ -34,7 +40,7 @@ function interval_arithmetic_sign_search(func, initialbox, tol, perturbation, nu
             elseif sup(funcrange) < perturbation
                 foundneg = true
             else
-                newboxes = split_box(box,numsplits)
+                newboxes = split_box(box, numsplits)
                 push!(queue, newboxes...)
             end
         end
@@ -55,7 +61,13 @@ end
 
 
 function Base.sign(func, box; tol = 1e-3, perturbation = 0.0, numsplits = 2)
-    return interval_arithmetic_sign_search(func, box, tol, perturbation, numsplits)
+    return interval_arithmetic_sign_search(
+        func,
+        box,
+        tol,
+        perturbation,
+        numsplits,
+    )
 end
 """
     sign(f, box)
@@ -66,14 +78,20 @@ return
 """
 function Base.sign(func, xL, xR; tol = 1e-3, perturbation = 0.0, numsplits = 2)
     box = IntervalBox(xL, xR)
-    return sign(func, box; tol = tol, perturbation = perturbation, numsplits = numsplits)
+    return sign(
+        func,
+        box;
+        tol = tol,
+        perturbation = perturbation,
+        numsplits = numsplits,
+    )
 end
 
 function extremal_coeffs_in_box(poly, xL, xR)
 
     max_coeff = -Inf
     min_coeff = Inf
-    points = poly.basis.points
+    points = interpolation_points(basis(poly))
     dim, npoints = size(points)
     for i = 1:npoints
         p = view(points, :, i)
@@ -87,19 +105,34 @@ function extremal_coeffs_in_box(poly, xL, xR)
 end
 
 
-function Base.sign(P::InterpolatingPolynomial{1}, xL, xR; tol = 1e-3, perturbation = 0.0, numsplits = 2)
+function Base.sign(
+    P::InterpolatingPolynomial{1,B},
+    xL,
+    xR;
+    tol = 1e-3,
+    perturbation = 0.0,
+    numsplits = 2,
+) where {B<:LagrangeTensorProductBasis}
 
     max_coeff, min_coeff = extremal_coeffs_in_box(P, xL, xR)
     if max_coeff > 0 && min_coeff < 0
         return 0
     else
         box = IntervalBox(xL, xR)
-        return interval_arithmetic_sign_search(P, box, tol, perturbation,numsplits)
+        return interval_arithmetic_sign_search(
+            P,
+            box,
+            tol,
+            perturbation,
+            numsplits,
+        )
     end
 end
 
 
-function (IP::InterpolatingPolynomial{N,B,T})(box::IntervalBox{2,S}) where {N,B,T,S}
+function (IP::InterpolatingPolynomial{N,B,T})(
+    box::IntervalBox{2,S},
+) where {N,B,T,S}
     @assert PolynomialBasis.dimension(IP) == 2
     return IP(box[1], box[2])
 end
