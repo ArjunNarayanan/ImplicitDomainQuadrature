@@ -184,8 +184,8 @@ deps = ["Artifacts", "Dates", "Downloads", "LibGit2", "Libdl", "Logging", "Markd
 uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 
 [[PolynomialBasis]]
-deps = ["DynamicPolynomials", "StaticPolynomials"]
-git-tree-sha1 = "c34ebc24ba5127917ebe7797fb188d13fbcda068"
+deps = ["DynamicPolynomials", "LinearAlgebra", "StaticPolynomials"]
+git-tree-sha1 = "8db517e079f69e9340ec4f1cda66878ed083f76d"
 repo-rev = "master"
 repo-url = "https://github.com/ArjunNarayanan/PolynomialBasis.jl.git"
 uuid = "776a168a-1973-4f1d-bada-3c06b642fffd"
