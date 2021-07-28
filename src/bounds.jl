@@ -141,5 +141,21 @@ function PolynomialBasis.gradient(
     IP::InterpolatingPolynomial{1,B,T},
     box::IntervalBox{2,S},
 ) where {B,T,S}
+    @assert PolynomialBasis.dimension(IP) == 2
     return gradient(IP, box[1], box[2])
+end
+
+function (IP::InterpolatingPolynomial{N,B,T})(
+    box::IntervalBox{1,S},
+) where {N,B,T,S}
+    @assert PolynomialBasis.dimension(IP) == 1
+    return IP(box[1])
+end
+
+function PolynomialBasis.gradient(
+    IP::InterpolatingPolynomial{1,B,T},
+    box::IntervalBox{1,S},
+) where {B,T,S}
+    @assert PolynomialBasis.dimension(IP) == 1
+    return gradient(IP, box[1])
 end
