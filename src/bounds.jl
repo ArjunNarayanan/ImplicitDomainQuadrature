@@ -130,9 +130,9 @@ function Base.sign(
 end
 
 
-function (IP::InterpolatingPolynomial{N,B,T})(
+function (IP::InterpolatingPolynomial{1,B,T})(
     box::IntervalBox{2,S},
-) where {N,B,T,S}
+) where {B,T,S}
     @assert PolynomialBasis.dimension(IP) == 2
     return IP(box[1], box[2])
 end
@@ -145,9 +145,9 @@ function PolynomialBasis.gradient(
     return gradient(IP, box[1], box[2])
 end
 
-function (IP::InterpolatingPolynomial{N,B,T})(
+function (IP::InterpolatingPolynomial{1,B,T})(
     box::IntervalBox{1,S},
-) where {N,B,T,S}
+) where {B<:PolynomialBasis.AbstractBasis{1},T,S}
     @assert PolynomialBasis.dimension(IP) == 1
     return IP(box[1])
 end
